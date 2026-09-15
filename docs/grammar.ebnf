@@ -1,0 +1,108 @@
+(* ============================================================ *)
+(* Emily — Lexical Grammar                                       *)
+(* Characters become tokens.                                     *)
+(* ============================================================ *)
+
+(* --- characters --- *)
+digit     = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+hex-digit = digit | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F" ;
+letter    = "a" | "b" | ... | "z" | "A" | "B" | ... | "Z" ;
+
+(* --- numbers --- *)
+int        = [ "-" ] , digit , { digit } ;
+float      = int , "." , digit , { digit } ;
+binary-int = "0b" , ( "0" | "1" ) , { "0" | "1" } ;
+number     = float | int ;
+
+(* --- strings --- *)
+string      = '"' , { string-char } , '"' ;
+string-char = any-char-except ('"' or '\') | escape ;
+escape      = '\' , ( 'n' | 't' | 'r' | '"' | '\' ) ;
+
+(* --- booleans --- *)
+boolean = "true" | "false" ;
+
+(* --- names --- *)
+symbol-start = letter | "_" | "+" | "-" | "*" | "/" | "!" | "?" | "<" | ">" | "=" ;
+symbol-char  = symbol-start | digit | "." ;
+symbol       = symbol-start , { symbol-char } ;
+keyword      = ":" , symbol ;
+
+(* --- delimiters --- *)
+lparen = "(" ;  rparen  = ")" ;
+lbrace = "{" ;  rbrace  = "}" ;
+lbracket = "[" ;  rbracket = "]" ;
+
+(* --- reader macros --- *)
+quote          = "'" ;
+quasiquote     = "`" ;
+unquote        = "," ;
+unquote-splice = ",@" ;
+
+(* --- whitespace and comments (skipped, not emitted) --- *)
+whitespace = " " | tab | newline ;
+comment    = ";" , { any-char-except-newline } , newline ;
+
+(* --- a token is any of the above --- *)
+token = number | string | boolean | symbol | keyword
+      | lparen | rparen | lbrace | rbrace | lbracket | rbracket
+      | quote | quasiquote | unquote | unquote-splice ;
+
+
+(* ============================================================ *)
+(* Emily — Syntactic Grammar                                     *)
+(* Tokens become forms.                                          *)
+(* ============================================================ *)
+
+program = { form } ;
+
+form    = atom | list | record | vector | quoted ;
+
+atom    = number | string | boolean | symbol | keyword ;
+
+list    = "(" , { form } , ")" ;
+record  = "{" , { keyword , form } , "}" ;
+vector  = "[" , { form } , "]" ;
+
+quoted  = quote , form
+        | quasiquote , form
+        | unquote , form
+        | unquote-splice , form ;
+
+
+(* ============================================================ *)
+(* Emily — Shape Grammar (checked by the compiler, not the parser) *)
+(* ============================================================ *)
+
+def-form    = "(" , "def" , symbol , [ ":" , type ] , form , ")" ;
+
+fn-form     = "(" , "fn" , "(" , { param } , ")" , [ ":" , type ] , form , ")" ;
+param       = symbol | "(" , symbol , ":" , type , ")" ;
+
+let-form    = "(" , "let" , "[" , { symbol , form } , "]" , form , ")" ;
+
+if-form     = "(" , "if" , form , form , form , ")" ;
+
+import-form = "(" , "import" , string , { ":" , symbol , form } , ")" ;
+
+type        = symbol
+            | "(" , "->" , { type } , ")"
+            | "{" , { keyword , type } , "}" ;
+
+
+(* ============================================================ *)
+(* Open ambiguities — record the resolution in ambiguities.md     *)
+(* ============================================================ *)
+
+(* 1. ":" as keyword prefix (":port") vs type annotation (": Int").
+      Resolution TBD: keyword = ":" immediately followed by a symbol-char;
+      annotation = ":" followed by whitespace.                        *)
+
+(* 2. "-" as symbol ("-") vs negative number ("-1").
+      Resolution TBD: lex "number" before "symbol"; when "-" is
+      directly followed by a digit it is part of the number,
+      otherwise it is the symbol "-".                                 *)
+
+(* 3. "." as symbol character ("foo.bar") vs float decimal ("1.5").
+      Resolution TBD: lex "float" before "int"/"symbol" so digits
+      greedily form numbers first.                                    *)
