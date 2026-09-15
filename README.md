@@ -4,6 +4,11 @@ A total, statically typed Lisp for configuration and data. It compiles to JSON,
 YAML, and TOML, and is designed to replace YAML/JSON where you need types,
 reuse, and safety.
 
+## Dedication
+
+This project is dedicated to Emily — a wonderful girl who changed my life.
+I hope this language is as safe as she makes me feel.
+
 **Status: work in progress.** The lexer is partially implemented; the parser,
 evaluator, and CLI are not built yet.
 
