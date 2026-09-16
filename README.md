@@ -9,7 +9,7 @@ reuse, and safety.
 This project is dedicated to Emily — a wonderful girl who changed my life.
 I hope this language is as safe as she makes me feel.
 
-**Status: work in progress.** The lexer is partially implemented; the parser,
+**Status: work in progress.** The lexer is complete (with tests); the parser,
 evaluator, and CLI are not built yet.
 
 ## Documentation
@@ -27,7 +27,7 @@ cargo build
 ## Roadmap
 
 - [x] Language spec, grammar, and ambiguity resolutions
-- [ ] Lexer (in progress)
+- [x] Lexer
 - [ ] Parser
 - [ ] Evaluator (tree-walking)
 - [ ] CLI + JSON output
