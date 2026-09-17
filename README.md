@@ -9,8 +9,8 @@ reuse, and safety.
 This project is dedicated to Emily — a wonderful girl who changed my life.
 I hope this language is as safe as she makes me feel.
 
-**Status: work in progress.** The lexer is complete (with tests); the parser,
-evaluator, and CLI are not built yet.
+**Status: work in progress.** The lexer and parser are complete (with tests);
+the evaluator and CLI are not built yet.
 
 ## Documentation
 
@@ -28,6 +28,6 @@ cargo build
 
 - [x] Language spec, grammar, and ambiguity resolutions
 - [x] Lexer
-- [ ] Parser
+- [x] Parser
 - [ ] Evaluator (tree-walking)
 - [ ] CLI + JSON output

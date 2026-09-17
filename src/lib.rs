@@ -4,5 +4,7 @@
 //! `tests/` can import the lexer and parser; `main.rs` is a thin binary that
 //! calls into it.
 
+pub mod ast;
 pub mod lexer;
+pub mod parser;
 pub mod token;
