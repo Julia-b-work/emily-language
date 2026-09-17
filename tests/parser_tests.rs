@@ -59,11 +59,9 @@ fn parses_list() {
 fn parses_vector() {
     assert_eq!(
         parse("[1 2 3]"),
-        vec![Expr::Vector(vec![
-            Expr::Int(1),
-            Expr::Int(2),
-            Expr::Int(3),
-        ])]
+        vec![Expr::Vector(
+            vec![Expr::Int(1), Expr::Int(2), Expr::Int(3),]
+        )]
     );
 }
 
