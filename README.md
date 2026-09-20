@@ -39,7 +39,7 @@ Work in progress. The pipeline is:
 
 - [x] **Lexer** — source text → tokens (tested)
 - [x] **Parser** — tokens → AST (tested)
-- [ ] **Evaluator** — AST → values *(in progress: `Value` and `Env` are built)*
+- [ ] **Evaluator** — AST → values *(in progress: `def`/`let`/`if`, records, and vectors work; functions and builtins next)*
 - [ ] **CLI + JSON output**
 
 ## Documentation
@@ -67,11 +67,13 @@ cargo test    # run the tests
 │   ├── parser.rs  # tokens → AST
 │   ├── value.rs   # runtime values
 │   ├── env.rs     # scopes
+│   ├── eval.rs    # AST → values
 │   ├── lib.rs     # module declarations
 │   └── main.rs    # CLI entry point (coming)
 ├── tests/
 │   ├── lexer_tests.rs
-│   └── parser_tests.rs
+│   ├── parser_tests.rs
+│   └── eval_tests.rs
 └── docs/
     ├── specs.md
     ├── grammar.ebnf
@@ -84,7 +86,7 @@ cargo test    # run the tests
 - [x] Language spec, grammar, and ambiguity resolutions
 - [x] Lexer
 - [x] Parser
-- [ ] Evaluator (tree-walking)
+- [ ] Evaluator (tree-walking) — in progress
 - [ ] CLI + JSON output
 
 Beyond v1: static types and inference, hygienic macros, ADTs + pattern
