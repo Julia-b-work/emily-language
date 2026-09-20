@@ -45,3 +45,33 @@ My thoughts about building Emily. Written after each dev session, just for fun.
 - I feel like I'm spending most of my time in this project, it's mostly fine but I don't want to get lost in something as big as a programming language. 
 
 - Next: the evaluator, where the language finally starts doing something!!!
+
+---
+
+## 2026-09-19 — The evaluator: values and scopes
+
+- Started the evaluator today, building the two data structures it needs: `Value` (what expressions become) and `Env` (scopes).
+
+- This is where I finally met `Rc` and `RefCell`. `Rc` lets many closures share one environment; `RefCell` lets them mutate it through the sharing. Together, `Rc<RefCell<Env>>` is "a shared, mutable bag of variables" — exactly what a scope is.
+
+- The `Env` is a `HashMap` of name → value plus a `parent` link. Looking up a name walks up that chain — that's lexical scoping. It's what makes `let` not leak its variables.
+
+- Honestly the hardest concept in the whole project so far. The borrow checker is strict, not impossible.
+
+- I saw Emily and was reminded what everything is about.
+
+- Next: the `eval` function itself, where the language actually runs.
+
+---
+
+## 2026-09-20 — The evaluator: it runs!
+
+- Wrote `eval.rs` — the tree-walker. Atoms evaluate to themselves, symbols get looked up, and lists dispatch to special forms.
+
+- Implemented `def`, `let`, and `if`. `let` makes a child scope; `if` runs exactly one branch.
+
+- I'm starting to get familiar with the Rust syntax.
+
+- 32 tests now, including the first end-to-end eval tests. Emily *runs* programs — `(def x 42) x` gives `42`. That's the milestone where it stops reading code and starts executing it.
+
+- Next: functions and closures, then the builtins. I'm excited!
