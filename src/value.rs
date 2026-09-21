@@ -41,3 +41,48 @@ pub struct Closure {
     /// The environment the closure was created in — what it "closes over".
     pub env: Rc<RefCell<Env>>,
 }
+
+impl Value {
+    /// Serializes this value to a JSON string.
+    ///
+    /// Only "data" values (numbers, strings, booleans, lists, records) can be
+    /// serialized. A closure is an error — matching the spec's rule that
+    /// functions never appear in output.
+    pub fn to_json(&self) -> Result<String, String> {
+        match self {
+            Value::Int(n) => Ok(n.to_string()),
+            Value::Float(f) => Ok(f.to_string()),
+            Value::Bool(b) => Ok(b.to_string()),
+            Value::String(s) => Ok(format!("\"{}\"", escape(s))),
+            Value::List(items) => {
+                let parts: Result<Vec<String>, String> =
+                    items.iter().map(|v| v.to_json()).collect();
+                Ok(format!("[{}]", parts?.join(", ")))
+            }
+            Value::Record(fields) => {
+                let parts: Result<Vec<String>, String> = fields
+                    .iter()
+                    .map(|(k, v)| Ok(format!("\"{}\": {}", escape(k), v.to_json()?)))
+                    .collect();
+                Ok(format!("{{{}}}", parts?.join(", ")))
+            }
+            Value::Closure(_) => Err("cannot serialize a function to JSON".to_string()),
+        }
+    }
+}
+
+/// Escapes special characters in a string for JSON output.
+fn escape(s: &str) -> String {
+    let mut out = String::new();
+    for c in s.chars() {
+        match c {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            '\n' => out.push_str("\\n"),
+            '\t' => out.push_str("\\t"),
+            '\r' => out.push_str("\\r"),
+            c => out.push(c),
+        }
+    }
+    out
+}

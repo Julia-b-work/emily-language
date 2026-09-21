@@ -41,3 +41,28 @@ fn evals_record_and_vector() {
     assert!(matches!(run("{:a 1 :b 2}"), Value::Record(_)));
     assert!(matches!(run("[1 2 3]"), Value::List(_)));
 }
+
+#[test]
+fn evals_closure_with_captured_variable() {
+    assert!(matches!(
+        run("(def x 10) (def get-x (fn () x)) (get-x)"),
+        Value::Int(10)
+    ));
+}
+
+#[test]
+fn evals_function_with_argument() {
+    assert!(matches!(
+        run("(def identity (fn (x) x)) (identity 42)"),
+        Value::Int(42)
+    ));
+}
+
+#[test]
+fn errors_on_wrong_arity() {
+    let tokens = Lexer::new("(def f (fn (a) a)) (f)").tokenize().unwrap();
+    let forms = Parser::new(tokens).parse().unwrap();
+    let env = Env::new();
+    eval(&forms[0], env.clone()).unwrap();
+    assert!(eval(&forms[1], env).is_err());
+}

@@ -1,3 +1,5 @@
+//! Integration tests for the lexer: source text → tokens.
+
 use emily::lexer::Lexer;
 use emily::token::Token;
 

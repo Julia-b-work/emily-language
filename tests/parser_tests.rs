@@ -1,3 +1,5 @@
+//! Integration tests for the parser: tokens → AST.
+
 use emily::ast::Expr;
 use emily::lexer::Lexer;
 use emily::parser::Parser;

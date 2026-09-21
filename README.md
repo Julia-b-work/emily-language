@@ -1,8 +1,8 @@
 # Emily
 
-A total, statically typed Lisp for configuration and data. It compiles to JSON,
-YAML, and TOML, and is designed to replace YAML/JSON where you need types,
-reuse, and safety.
+A total, statically typed Lisp for configuration and data. It compiles to JSON
+(YAML and TOML planned), and is designed to replace YAML/JSON where you need
+types, reuse, and safety.
 
 ## Dedication
 
@@ -35,15 +35,16 @@ instead of copy-pasted YAML.
 
 ## Status
 
-Work in progress. The pipeline is:
+v1 is complete. The pipeline is:
 
 - [x] **Lexer** — source text → tokens (tested)
 - [x] **Parser** — tokens → AST (tested)
-- [ ] **Evaluator** — AST → values *(in progress: `def`/`let`/`if`, records, and vectors work; functions and builtins next)*
-- [ ] **CLI + JSON output**
+- [x] **Evaluator** — AST → values (`def`/`let`/`if`/`fn`, closures, field access, builtins)
+- [x] **CLI + JSON output** — `cargo run -- examples/hello.em`
 
 ## Documentation
 
+- [`docs/syntax.md`](docs/syntax.md) — a quick tour of the syntax
 - [`docs/specs.md`](docs/specs.md) — the language specification
 - [`docs/grammar.ebnf`](docs/grammar.ebnf) — lexical and syntactic grammar
 - [`docs/ambiguities.md`](docs/ambiguities.md) — resolved syntax ambiguities
@@ -86,8 +87,8 @@ cargo test    # run the tests
 - [x] Language spec, grammar, and ambiguity resolutions
 - [x] Lexer
 - [x] Parser
-- [ ] Evaluator (tree-walking) — in progress
-- [ ] CLI + JSON output
+- [x] Evaluator (tree-walking)
+- [x] CLI + JSON output
 
 Beyond v1: static types and inference, hygienic macros, ADTs + pattern
 matching, imports with integrity checking, and YAML/TOML output.
