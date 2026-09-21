@@ -19,7 +19,7 @@ value** becomes the output, printed as JSON.
 ```lisp
 42          ; a number
 3.14        ; a float
-"hello"     ; a string
+"emily"     ; a string
 true        ; a boolean
 ```
 
