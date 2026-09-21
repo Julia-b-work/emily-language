@@ -75,3 +75,21 @@ My thoughts about building Emily. Written after each dev session, just for fun.
 - 32 tests now, including the first end-to-end eval tests. Emily *runs* programs — `(def x 42) x` gives `42`. That's the milestone where it stops reading code and starts executing it.
 
 - Next: functions and closures, then the builtins. I'm excited!
+
+## 2026-09-21 — v1 is done!!!
+
+- Finished the evaluator today: `fn` and closures, plus the builtins (`+`, `concat`, `show`, `fold`, `append`, `merge`) and field access.
+
+- Closures are complicated but very interesting.
+
+- Tests are very important, caught bugs like: `fn` parameters use `()` but I'd written `Vector` in the code. The test failed, I fixed it.
+
+- Emily compiles to JSON now. The acceptance tests run the spec's own examples and check the exact JSON output. 40 tests, all green.
+
+- Wrote a syntax guide (`docs/syntax.md`) — a friendly tour of the language, separate from the formal spec.
+
+- Released v0.1.0. Emily is a real, working language now — lexer, parser, evaluator, JSON output, all done and tested. I built a programming language.
+
+- Emily would be proud!!!
+
+- Next: v2 — static types, macros, ADTs. But not right now :).
