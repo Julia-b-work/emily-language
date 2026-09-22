@@ -61,6 +61,7 @@ cargo test    # run the tests
 
 ```
 .
+├── CHANGELOG.md
 ├── src/
 │   ├── token.rs   # token types
 │   ├── lexer.rs   # source text → tokens
@@ -70,15 +71,21 @@ cargo test    # run the tests
 │   ├── env.rs     # scopes
 │   ├── eval.rs    # AST → values
 │   ├── lib.rs     # module declarations
-│   └── main.rs    # CLI entry point (coming)
+│   └── main.rs    # CLI entry point
 ├── tests/
 │   ├── lexer_tests.rs
 │   ├── parser_tests.rs
-│   └── eval_tests.rs
+│   ├── eval_tests.rs
+│   └── acceptance_tests.rs
+├── examples/
+│   ├── hello.em
+│   ├── env_config.em
+│   └── computed_urls.em
 └── docs/
     ├── specs.md
     ├── grammar.ebnf
     ├── ambiguities.md
+    ├── syntax.md
     └── dev_diary.md
 ```
 

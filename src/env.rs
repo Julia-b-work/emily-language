@@ -1,9 +1,9 @@
 //! Environments: scopes that map names to values.
-
+use std::rc::{Rc, Weak};
 use crate::value::Value;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
+
 
 /// A scope: a map of names to values, plus an optional parent scope.
 ///
@@ -16,7 +16,7 @@ pub struct Env {
     /// The variables bound directly in this scope.
     bindings: HashMap<String, Value>,
     /// The enclosing scope, if any (`None` for the top level).
-    parent: Option<Rc<RefCell<Env>>>,
+    parent: Option<Weak<RefCell<Env>>>,
 }
 
 impl Env {
@@ -29,7 +29,7 @@ impl Env {
     pub fn child(parent: Rc<RefCell<Env>>) -> Rc<RefCell<Self>> {
         Rc::new(RefCell::new(Env {
             bindings: HashMap::new(),
-            parent: Some(parent),
+            parent: Some(Rc::downgrade(&parent)),
         }))
     }
 
@@ -39,7 +39,7 @@ impl Env {
             return Some(v.clone());
         }
         match &self.parent {
-            Some(p) => p.borrow().get(name),
+            Some(p) => p.upgrade()?.borrow().get(name),
             None => None,
         }
     }

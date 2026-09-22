@@ -1,9 +1,14 @@
-;; A small Emily program — the last form is the program's result.
+;; A configuration, computed with code!
 
-(def x 42)
+(def base {:host "localhost" :port 8080 :debug false})
 
-(def y
-  (let [z 10]
-    (if false z x)))
+(def prod (merge base {:host "prod.example.com"}))
 
-{:answer x :value y :tags [1 2 3]}
+(def services ["api" "Emily" "scheduler"])
+
+(def instances
+  (fold services [] (fn (acc name)
+    (append acc {:name name
+                 :url (concat "http://" prod.host ":" (show prod.port))}))))
+
+{:env "production" :config prod :instances instances}
