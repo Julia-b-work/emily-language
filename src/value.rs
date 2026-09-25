@@ -69,6 +69,32 @@ impl Value {
             Value::Closure(_) => Err("cannot serialize a function to JSON".to_string()),
         }
     }
+
+    /// Serializes this value to a YAML string (block style).
+    ///
+    /// Like [`to_json`], a closure is an error — functions never appear in
+    /// output.
+    pub fn to_yaml(&self) -> Result<String, String> {
+        Ok(yaml_lines(self)?.join("\n"))
+    }
+
+    /// Serializes this value to a TOML string.
+    ///
+    /// TOML documents must be a table at the top level, so this errors unless
+    /// the value is a record.
+    pub fn to_toml(&self) -> Result<String, String> {
+        match self {
+            Value::Record(fields) => {
+                let mut lines = Vec::new();
+                for (k, v) in fields {
+                    lines.push(format!("{} = {}", k, toml_value(v)?));
+                }
+                Ok(lines.join("\n"))
+            }
+            Value::Closure(_) => Err("cannot serialize a function to TOML".to_string()),
+            _ => Err("TOML output requires a top-level record (mapping)".to_string()),
+        }
+    }
 }
 
 /// Escapes special characters in a string for JSON output.
@@ -85,4 +111,79 @@ fn escape(s: &str) -> String {
         }
     }
     out
+}
+
+/// Whether a value is a collection (list or record), i.e. not a scalar.
+fn is_container(v: &Value) -> bool {
+    matches!(v, Value::List(_) | Value::Record(_))
+}
+
+/// Serializes a value into YAML block-style lines.
+///
+/// Each line carries no parent-relative indentation; the caller indents a
+/// nested block's lines by prefixing them with two spaces. Scalars produce a
+/// single line, so a list item or record field is "inline" iff its value is a
+/// scalar.
+fn yaml_lines(v: &Value) -> Result<Vec<String>, String> {
+    match v {
+        Value::Int(n) => Ok(vec![n.to_string()]),
+        Value::Float(f) => Ok(vec![f.to_string()]),
+        Value::Bool(b) => Ok(vec![b.to_string()]),
+        Value::String(s) => Ok(vec![format!("\"{}\"", escape(s))]),
+        Value::List(items) => {
+            if items.is_empty() {
+                return Ok(vec!["[]".to_string()]);
+            }
+            let mut lines = Vec::new();
+            for item in items {
+                let sub = yaml_lines(item)?;
+                lines.push(format!("- {}", sub[0]));
+                for l in &sub[1..] {
+                    lines.push(format!("  {}", l));
+                }
+            }
+            Ok(lines)
+        }
+        Value::Record(fields) => {
+            if fields.is_empty() {
+                return Ok(vec!["{}".to_string()]);
+            }
+            let mut lines = Vec::new();
+            for (k, v) in fields {
+                let sub = yaml_lines(v)?;
+                if is_container(v) {
+                    lines.push(format!("{}:", k));
+                    for l in &sub {
+                        lines.push(format!("  {}", l));
+                    }
+                } else {
+                    lines.push(format!("{}: {}", k, sub[0]));
+                }
+            }
+            Ok(lines)
+        }
+        Value::Closure(_) => Err("cannot serialize a function to YAML".to_string()),
+    }
+}
+
+/// Serializes a value as TOML inline (used inside tables and arrays).
+fn toml_value(v: &Value) -> Result<String, String> {
+    match v {
+        Value::Int(n) => Ok(n.to_string()),
+        Value::Float(f) => Ok(f.to_string()),
+        Value::Bool(b) => Ok(b.to_string()),
+        Value::String(s) => Ok(format!("\"{}\"", escape(s))),
+        Value::List(items) => {
+            let parts: Result<Vec<String>, String> = items.iter().map(toml_value).collect();
+            Ok(format!("[{}]", parts?.join(", ")))
+        }
+        Value::Record(fields) => {
+            let parts: Result<Vec<String>, String> = fields
+                .iter()
+                .map(|(k, v)| Ok(format!("{} = {}", k, toml_value(v)?)))
+                .collect();
+            Ok(format!("{{ {} }}", parts?.join(", ")))
+        }
+        Value::Closure(_) => Err("cannot serialize a function to TOML".to_string()),
+    }
 }

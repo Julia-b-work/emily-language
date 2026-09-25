@@ -1,8 +1,8 @@
 # Emily
 
-A total, statically typed Lisp for configuration and data. It compiles to JSON
-(YAML and TOML planned), and is designed to replace YAML/JSON where you need
-types, reuse, and safety.
+A total, statically typed Lisp for configuration and data. It compiles to JSON,
+YAML, and TOML, and is designed to replace YAML/JSON where you need types,
+reuse, and safety.
 
 ## Dedication
 
@@ -40,7 +40,7 @@ v1 is complete. The pipeline is:
 - [x] **Lexer** — source text → tokens (tested)
 - [x] **Parser** — tokens → AST (tested)
 - [x] **Evaluator** — AST → values (`def`/`let`/`if`/`fn`, closures, field access, builtins)
-- [x] **CLI + JSON output** — `cargo run -- examples/hello.em`
+- [x] **CLI + JSON/YAML/TOML output** — `cargo run -- examples/hello.em` (or `--format yaml` / `--format toml`)
 
 ## Documentation
 
@@ -91,11 +91,18 @@ cargo test    # run the tests
 
 ## Roadmap
 
+### v1 (complete)
+
 - [x] Language spec, grammar, and ambiguity resolutions
 - [x] Lexer
 - [x] Parser
 - [x] Evaluator (tree-walking)
 - [x] CLI + JSON output
 
-Beyond v1: static types and inference, hygienic macros, ADTs + pattern
-matching, imports with integrity checking, and YAML/TOML output.
+### v2
+
+- [x] YAML and TOML output
+- [ ] Imports with integrity checking
+- [ ] Static types and inference
+- [ ] Hygienic macros
+- [ ] ADTs + pattern matching

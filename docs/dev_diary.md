@@ -93,3 +93,19 @@ My thoughts about building Emily. Written after each dev session, just for fun.
 - Emily would be proud!!!
 
 - Next: v2 — static types, macros, ADTs. But not right now :).
+
+---
+
+## 2026-09-25 — YAML and TOML output
+
+- Emily now compiles to three formats: JSON, YAML, and TOML!
+
+- YAML was the interesting one. Block style needs indentation, and getting nested records and lists right took some thinking. The trick I liked: the serializer returns a list of *lines* with no parent-relative indent, and the parent indents a nested block by prefixing its lines with two spaces. No messy indent counter to keep in sync.
+
+- TOML is stricter than I thought — a document has to be a table at the top level, so a top-level list or number is just an error. Nested records turn into inline tables like `{ host = "prod.example.com" }`, which seems fine for config.
+
+- Added a `--format` flag (`-f` short). Now it's `emily --format yaml file.em`. It feels like a real command-line tool (yay).
+
+- Typos keep getting me! Rust's case sensitivity does not forgive, but the compiler is nice and patient.
+
+- Up next: imports! Spreading config across files is what would make Emily actually usable in the real world.

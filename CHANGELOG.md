@@ -3,6 +3,19 @@
 All notable changes to this project are recorded here. Versions follow
 [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH.
 
+## [0.2.1] - 2026-09-25
+
+### Added
+- **YAML output.** `--format yaml` emits block-style YAML with correct nesting
+  for nested records and lists.
+- **TOML output.** `--format toml` emits TOML; the top level must be a record
+  (TOML documents are tables), and nested records become inline tables.
+- **`--format` flag.** `emily [--format json|yaml|toml] <file.em>` selects the
+  output format (`json` is the default; `-f` is a short form).
+
+### Changed
+- README roadmap restructured into a v1 (complete) and v2 section.
+
 ## [0.1.1] - 2026-09-22
 
 ### Fixed

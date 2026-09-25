@@ -1,9 +1,8 @@
 //! Environments: scopes that map names to values.
-use std::rc::{Rc, Weak};
 use crate::value::Value;
 use std::cell::RefCell;
 use std::collections::HashMap;
-
+use std::rc::{Rc, Weak};
 
 /// A scope: a map of names to values, plus an optional parent scope.
 ///
