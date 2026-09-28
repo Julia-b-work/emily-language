@@ -33,6 +33,10 @@ I hope this language is as safe as she makes me feel.
 Configuration with types, reuse, and no surprises — functions and records
 instead of copy-pasted YAML.
 
+## Demo
+
+![Emily compiling a config to JSON and YAML, then catching an error with line/column](emily.gif)
+
 ## Status
 
 v1 is complete. The pipeline is:
