@@ -70,9 +70,11 @@ cargo test    # run the tests
 │   ├── value.rs   # runtime values
 │   ├── env.rs     # scopes
 │   ├── eval.rs    # AST → values
+│   ├── import.rs  # (import "file.em") expansion
 │   ├── lib.rs     # module declarations
 │   └── main.rs    # CLI entry point
 ├── tests/
+│   ├── import_tests.rs
 │   ├── lexer_tests.rs
 │   ├── parser_tests.rs
 │   ├── eval_tests.rs
@@ -80,7 +82,11 @@ cargo test    # run the tests
 ├── examples/
 │   ├── hello.em
 │   ├── env_config.em
-│   └── computed_urls.em
+│   ├── computed_urls.em
+│   ├── database.em        # imported by config.em
+│   ├── server.em          # imported by config.em
+│   ├── config.em          # imports database.em + server.em
+│   └── error_example.em   # deliberately broken (shows error messages)
 └── docs/
     ├── specs.md
     ├── grammar.ebnf
@@ -102,7 +108,7 @@ cargo test    # run the tests
 ### v2
 
 - [x] YAML and TOML output
-- [ ] Imports with integrity checking
+- [x] Imports with integrity checking
 - [ ] Static types and inference
 - [ ] Hygienic macros
 - [ ] ADTs + pattern matching

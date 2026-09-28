@@ -109,3 +109,19 @@ My thoughts about building Emily. Written after each dev session, just for fun.
 - Typos keep getting me! Rust's case sensitivity does not forgive, but the compiler is nice and patient.
 
 - Up next: imports! Spreading config across files is what would make Emily actually usable in the real world.
+
+---
+
+## 2026-09-28 — Imports and better errors
+
+- Emily can now `(import "file.em")`! Config split across files and reused, which is the whole point of the language. Paths resolve relative to the importing file, and circular imports are caught before they loop forever.
+
+- I built imports as a pre-evaluation pass instead of a special form. After parsing, `expand_imports` replaces each import with the imported file's forms. This kept `eval` completely untouched, which felt right.
+
+- The cycle detector is just a stack, push a file before expanding it, pop after, and if you try to import a file already on the stack, that's a circle. `canonicalize` collapses `./a.em` and `a.em` into one path so the check can't be fooled.
+
+- Also added line/column to errors. Tokens now remember where they came from (`Token` became a struct with `kind`, `line`, `col`), so the parser can say *where* a problem is, not just *what*. `expected a keyword in record, got Int(42) (line 5, column 2)`, so much nicer than a bare `unexpected token`.
+
+- Wrote example programs that actually use it: `config.em` pulls in `database.em` and `server.em`. And `error_example.em` is deliberately broken, just to watch the error point at the right spot.
+
+- Next: static types or macros? Not sure yet! But imports were the thing Emily needed to be actually usable.

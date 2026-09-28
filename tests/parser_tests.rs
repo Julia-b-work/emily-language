@@ -124,3 +124,11 @@ fn errors_on_unterminated_record() {
 fn errors_on_unexpected_token() {
     assert!(parse_result(")").is_err());
 }
+
+#[test]
+fn errors_report_position() {
+    // A lone `)` is an unexpected token at line 1, column 1.
+    let tokens = Lexer::new(")").tokenize().unwrap();
+    let err = Parser::new(tokens).parse().unwrap_err();
+    assert!(err.contains("line 1, column 1"), "got: {err}");
+}

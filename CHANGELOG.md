@@ -3,6 +3,21 @@
 All notable changes to this project are recorded here. Versions follow
 [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH.
 
+## [0.1.3] - 2026-09-28
+
+### Added
+- **Imports.** `(import "path.em")` splices another file's forms into the
+  program, resolving paths relative to the importing file and catching circular
+  imports. Runs as a pre-evaluation pass, so `eval` is untouched.
+- **Error messages with positions.** Lexer and parser errors now report the
+  offending line and column; tokens carry their source position.
+- **Example programs.** `config.em` (imports `database.em` and `server.em`) and
+  `error_example.em` (deliberately broken, to show error messages).
+
+### Changed
+- `Token` is now a struct (`kind`, `line`, `col`) instead of a bare enum.
+- README: imports checked off the roadmap; project structure updated.
+
 ## [0.2.1] - 2026-09-25
 
 ### Added

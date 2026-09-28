@@ -3,18 +3,26 @@
 //! The lexer walks the input one character at a time and produces a flat list
 //! of [`Token`]s, resolving the ambiguities documented in `docs/ambiguities.md`
 //! (e.g. `:` as keyword vs annotation, `-` as symbol vs negative number).
+//!
+//! Each token records the line/column where it starts, and lexing errors carry
+//! a position too.
 
-use crate::token::Token;
+use crate::token::{Token, TokenKind};
 
 /// A cursor over the source text.
 ///
 /// Holds the input as a list of characters plus a position, and exposes
-/// `peek`/`advance` primitives that the scanning methods build on.
+/// `peek`/`advance` primitives that the scanning methods build on. It also
+/// tracks the current line and column (both 1-based) for error reporting.
 pub struct Lexer {
     /// The source, split into individual characters.
     chars: Vec<char>,
     /// The current cursor position (an index into `chars`).
     pos: usize,
+    /// The current 1-based line number.
+    line: usize,
+    /// The current 1-based column number.
+    col: usize,
 }
 
 impl Lexer {
@@ -23,6 +31,8 @@ impl Lexer {
         Lexer {
             chars: source.chars().collect(),
             pos: 0,
+            line: 1,
+            col: 1,
         }
     }
 
@@ -31,16 +41,28 @@ impl Lexer {
         self.chars.get(self.pos).copied()
     }
 
-    /// Returns the character at the cursor and advances by one.
+    /// Returns the character at the cursor, advancing the cursor and updating
+    /// the line/column tracking.
     fn advance(&mut self) -> Option<char> {
-        let c = self.peek();
+        let c = self.peek()?;
         self.pos += 1;
-        c
+        if c == '\n' {
+            self.line += 1;
+            self.col = 1;
+        } else {
+            self.col += 1;
+        }
+        Some(c)
     }
 
     /// Returns the character just after the cursor without moving (used for lookahead).
     fn peek_next(&self) -> Option<char> {
         self.chars.get(self.pos + 1).copied()
+    }
+
+    /// Formats an error message with the current line and column.
+    fn error(&self, msg: &str) -> String {
+        format!("{msg} (line {}, column {})", self.line, self.col)
     }
 
     /// Skips whitespace and `;` line comments, leaving the cursor on the next real token.
@@ -65,31 +87,33 @@ impl Lexer {
     }
 
     /// Reads a string literal, returning a `String` token with escapes translated.
-    fn lex_string(&mut self) -> Result<Token, String> {
+    fn lex_string(&mut self) -> Result<TokenKind, String> {
         self.advance(); // consume the opening quote
         let mut out = String::new();
         while let Some(c) = self.advance() {
             match c {
-                '"' => return Ok(Token::String(out)),
+                '"' => return Ok(TokenKind::String(out)),
                 '\\' => {
-                    let esc = self.advance().ok_or("unterminated string")?;
+                    let esc = self
+                        .advance()
+                        .ok_or_else(|| self.error("unterminated string"))?;
                     match esc {
                         'n' => out.push('\n'),
                         't' => out.push('\t'),
                         'r' => out.push('\r'),
                         '"' => out.push('"'),
                         '\\' => out.push('\\'),
-                        other => return Err(format!("unknown escape: \\{other}")),
+                        other => return Err(self.error(&format!("unknown escape: \\{other}"))),
                     }
                 }
                 other => out.push(other),
             }
         }
-        Err("unterminated string".to_string())
+        Err(self.error("unterminated string"))
     }
 
     /// Reads a number, returning an `Int` or `Float` token.
-    fn lex_number(&mut self) -> Result<Token, String> {
+    fn lex_number(&mut self) -> Result<TokenKind, String> {
         let mut text = String::new();
 
         if self.peek() == Some('-') {
@@ -121,12 +145,16 @@ impl Lexer {
                     break;
                 }
             }
-            let value: f64 = text.parse().map_err(|_| format!("invalid float: {text}"))?;
-            return Ok(Token::Float(value));
+            let value: f64 = text
+                .parse()
+                .map_err(|_| self.error(&format!("invalid float: {text}")))?;
+            return Ok(TokenKind::Float(value));
         }
 
-        let value: i64 = text.parse().map_err(|_| format!("invalid int: {text}"))?;
-        Ok(Token::Int(value))
+        let value: i64 = text
+            .parse()
+            .map_err(|_| self.error(&format!("invalid int: {text}")))?;
+        Ok(TokenKind::Int(value))
     }
 
     /// Reads a run of symbol characters, returning them as a `String`.
@@ -146,81 +174,82 @@ impl Lexer {
     }
 
     /// Reads a symbol, mapping the spellings `true`/`false` to `Bool` tokens.
-    fn lex_symbol(&mut self) -> Token {
+    fn lex_symbol(&mut self) -> TokenKind {
         let s = self.read_symbol_chars();
         match s.as_str() {
-            "true" => Token::Bool(true),
-            "false" => Token::Bool(false),
-            _ => Token::Symbol(s),
+            "true" => TokenKind::Bool(true),
+            "false" => TokenKind::Bool(false),
+            _ => TokenKind::Symbol(s),
         }
     }
 
     /// Reads a keyword (`:name`). Called only after the `:` is confirmed.
-    fn lex_keyword(&mut self) -> Token {
+    fn lex_keyword(&mut self) -> TokenKind {
         self.advance(); // skip the ':'
         let s = self.read_symbol_chars();
-        Token::Keyword(s)
+        TokenKind::Keyword(s)
     }
 
     pub fn tokenize(mut self) -> Result<Vec<Token>, String> {
         let mut tokens = Vec::new();
         loop {
             self.skip_whitespace_and_comments();
-            match self.peek() {
+            let (line, col) = (self.line, self.col); // start of the next token
+            let kind = match self.peek() {
                 None => break,
                 Some('(') => {
                     self.advance();
-                    tokens.push(Token::LParen);
+                    TokenKind::LParen
                 }
                 Some(')') => {
                     self.advance();
-                    tokens.push(Token::RParen);
+                    TokenKind::RParen
                 }
                 Some('{') => {
                     self.advance();
-                    tokens.push(Token::LBrace);
+                    TokenKind::LBrace
                 }
                 Some('}') => {
                     self.advance();
-                    tokens.push(Token::RBrace);
+                    TokenKind::RBrace
                 }
                 Some('[') => {
                     self.advance();
-                    tokens.push(Token::LBracket);
+                    TokenKind::LBracket
                 }
                 Some(']') => {
                     self.advance();
-                    tokens.push(Token::RBracket);
+                    TokenKind::RBracket
                 }
 
                 Some('\'') => {
                     self.advance();
-                    tokens.push(Token::Quote);
+                    TokenKind::Quote
                 }
                 Some('`') => {
                     self.advance();
-                    tokens.push(Token::Quasiquote);
+                    TokenKind::Quasiquote
                 }
                 Some(',') => {
                     self.advance();
                     if self.peek() == Some('@') {
                         self.advance();
-                        tokens.push(Token::UnquoteSplice);
+                        TokenKind::UnquoteSplice
                     } else {
-                        tokens.push(Token::Unquote);
+                        TokenKind::Unquote
                     }
                 }
-                Some('"') => tokens.push(self.lex_string()?),
-                Some(c) if c.is_ascii_digit() => tokens.push(self.lex_number()?),
+                Some('"') => self.lex_string()?,
+                Some(c) if c.is_ascii_digit() => self.lex_number()?,
                 Some('-') => {
                     let next_is_digit = match self.peek_next() {
                         Some(c) => c.is_ascii_digit(),
                         None => false,
                     };
                     if next_is_digit {
-                        tokens.push(self.lex_number()?);
+                        self.lex_number()?
                     } else {
-                        tokens.push(self.lex_symbol());
+                        self.lex_symbol()
                     }
                 }
 
@@ -230,15 +259,16 @@ impl Lexer {
                         None => false,
                     };
                     if next_is_symbol {
-                        tokens.push(self.lex_keyword());
+                        self.lex_keyword()
                     } else {
                         self.advance();
-                        tokens.push(Token::Colon);
+                        TokenKind::Colon
                     }
                 }
-                Some(c) if is_symbol_start(c) => tokens.push(self.lex_symbol()),
-                Some(c) => return Err(format!("unexpected character: {c}")),
-            }
+                Some(c) if is_symbol_start(c) => self.lex_symbol(),
+                Some(c) => return Err(self.error(&format!("unexpected character: {c}"))),
+            };
+            tokens.push(Token { kind, line, col });
         }
         Ok(tokens)
     }

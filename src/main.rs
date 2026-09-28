@@ -7,10 +7,12 @@
 
 use std::env;
 use std::fs;
+use std::path::Path;
 use std::process::exit;
 
 use emily::env::Env;
 use emily::eval::eval;
+use emily::import::expand_imports;
 use emily::lexer::Lexer;
 use emily::parser::Parser;
 use emily::value::Value;
@@ -66,6 +68,17 @@ fn main() {
         Ok(f) => f,
         Err(e) => {
             eprintln!("parse error: {e}");
+            exit(1);
+        }
+    };
+
+    // Expand `(import "path")` forms before evaluating, splicing the imported
+    // files' forms in place. Paths resolve relative to the entry file.
+    let base_dir = Path::new(&path).parent().unwrap_or(Path::new("."));
+    let forms = match expand_imports(forms, base_dir) {
+        Ok(f) => f,
+        Err(e) => {
+            eprintln!("import error: {e}");
             exit(1);
         }
     };
