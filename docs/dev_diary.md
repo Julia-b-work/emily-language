@@ -125,3 +125,23 @@ My thoughts about building Emily. Written after each dev session, just for fun.
 - Wrote example programs that actually use it: `config.em` pulls in `database.em` and `server.em`. And `error_example.em` is deliberately broken, just to watch the error point at the right spot.
 
 - Next: static types or macros? Not sure yet! But imports were the thing Emily needed to be actually usable.
+
+---
+
+## 2026-09-29 — Filling the builtins gap
+
+- Emily can compare and do math now! Added `=`, `>`, `<`, `>=`, `<=`, `and`, `or`, `not`, `-`, `*`, and `/`. The builtins were missing the boring-but-necessary stuff, comparison, booleans, and any math besides `+`.
+
+- My favorite bit of design: the four ordering comparisons (`>`, `<`, `>=`, `<=`) all share one `compare` helper that takes the operator as a string and picks the right Rust operator. No four copy-pasted functions.
+
+- `=` got its own function because it's not just numbers, it also compares strings and booleans! It only compares same types, so `(= 1 1.0)` is an error. For a config language I think that's the honest behavior.
+
+- `and` and `or` don't short-circuit, and that's fine, Emily's builtins are pure (that sounds very cool), no side effects, so skipping an argument would be invisible anyway. It keeps them a simple loop.
+
+- `-` and `/` take two arguments, `*` is variadic like `+`. And integer division by zero apparently *panics* in Rust! So I added an `if b == 0` guard and a test — `(/ 1 0)` returns an error instead of crashing.
+
+- 52 tests now, all green. The builtins gap is closed.
+
+- Emily is a maths girl, so I think she would like these new additions :) .
+
+- Next: static types and inference, for real this time :p . That's the big one the README has been promising since v1.

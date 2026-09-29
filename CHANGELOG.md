@@ -3,6 +3,17 @@
 All notable changes to this project are recorded here. Versions follow
 [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH.
 
+## [0.1.4] - 2026-09-29
+
+### Added
+- **Comparisons.** `=`, `>`, `<`, `>=`, `<=` — equality over scalars (numbers,
+  strings, and booleans) plus numeric ordering. The four ordering comparisons
+  share a single `compare` helper.
+- **Boolean logic.** `and`, `or`, `not` — `and`/`or` are variadic; all three are
+  eager (builtins are pure, so short-circuiting would be invisible).
+- **Math.** `-`, `*`, `/` — binary subtraction, variadic multiplication, and
+  binary integer division with a division-by-zero error (instead of a panic).
+
 ## [0.1.3] - 2026-09-28
 
 ### Added

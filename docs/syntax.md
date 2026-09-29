@@ -97,6 +97,14 @@ api.host     ; => "api.example.com"
 | Form | What it does |
 |---|---|
 | `(+ a b ...)` | sum numbers |
+| `(- a b)` | subtract two numbers |
+| `(* a b ...)` | multiply numbers |
+| `(/ a b)` | integer division |
+| `(= a b)` | equality — numbers, strings, or booleans |
+| `(> a b)`, `(< a b)`, `(>= a b)`, `(<= a b)` | numeric comparison |
+| `(and a b ...)` | logical and |
+| `(or a b ...)` | logical or |
+| `(not x)` | logical not |
 | `(concat a b ...)` | join strings |
 | `(show x)` | turn a value into a string |
 | `(merge a b ...)` | combine records (later wins) |
@@ -128,5 +136,5 @@ The last form's value is printed as JSON.
 
 ## Not here yet
 
-Static types, macros, `import`, and YAML/TOML output are planned (see the
-roadmap in the [README](../README.md)).
+Static types and hygienic macros are planned (see the roadmap in the
+[README](../README.md)).

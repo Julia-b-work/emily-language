@@ -66,3 +66,40 @@ fn errors_on_wrong_arity() {
     eval(&forms[0], env.clone()).unwrap();
     assert!(eval(&forms[1], env).is_err());
 }
+
+#[test]
+fn evals_comparisons() {
+    assert!(matches!(run("(= 1 1)"), Value::Bool(true)));
+    assert!(matches!(run("(= 1 2)"), Value::Bool(false)));
+    assert!(matches!(run("(= \"a\" \"a\")"), Value::Bool(true)));
+    assert!(matches!(run("(= true false)"), Value::Bool(false)));
+    assert!(matches!(run("(> 3 2)"), Value::Bool(true)));
+    assert!(matches!(run("(< 3 2)"), Value::Bool(false)));
+    assert!(matches!(run("(>= 2 2)"), Value::Bool(true)));
+    assert!(matches!(run("(<= 1 2)"), Value::Bool(true)));
+}
+
+#[test]
+fn evals_booleans() {
+    assert!(matches!(run("(and true true)"), Value::Bool(true)));
+    assert!(matches!(run("(and true false)"), Value::Bool(false)));
+    assert!(matches!(run("(or false true)"), Value::Bool(true)));
+    assert!(matches!(run("(or false false)"), Value::Bool(false)));
+    assert!(matches!(run("(not true)"), Value::Bool(false)));
+    assert!(matches!(run("(not false)"), Value::Bool(true)));
+}
+
+#[test]
+fn evals_math() {
+    assert!(matches!(run("(- 5 3)"), Value::Int(2)));
+    assert!(matches!(run("(* 2 3 4)"), Value::Int(24)));
+    assert!(matches!(run("(/ 10 2)"), Value::Int(5)));
+}
+
+#[test]
+fn errors_on_division_by_zero() {
+    let tokens = Lexer::new("(/ 1 0)").tokenize().unwrap();
+    let forms = Parser::new(tokens).parse().unwrap();
+    let env = Env::new();
+    assert!(eval(&forms[0], env).is_err());
+}

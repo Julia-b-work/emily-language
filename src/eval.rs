@@ -83,6 +83,17 @@ fn eval_list(items: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
             "fold" => builtin_fold(rest, env),
             "append" => builtin_append(rest, env),
             "merge" => builtin_merge(rest, env),
+            "=" => builtin_eq(rest, env),
+            ">" => compare(">", rest, env),
+            "<" => compare("<", rest, env),
+            ">=" => compare(">=", rest, env),
+            "<=" => compare("<=", rest, env),
+            "and" => builtin_and(rest, env),
+            "or" => builtin_or(rest, env),
+            "not" => builtin_not(rest, env),
+            "-" => builtin_sub(rest, env),
+            "*" => builtin_mul(rest, env),
+            "/" => builtin_div(rest, env),
             _ => apply_function(name, rest, env),
         },
         _ => Err("list must start with a symbol".to_string()),
@@ -200,6 +211,14 @@ fn apply_function(name: &str, args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Va
     }
 }
 
+/// Evaluates an argument and returns it as an integer, or an error.
+fn int_arg(arg: &Expr, env: Rc<RefCell<Env>>, op: &str) -> Result<i64, String> {
+    match eval(arg, env)? {
+        Value::Int(n) => Ok(n),
+        other => Err(format!("{op} expects numbers, got {other:?}")),
+    }
+}
+
 /// `(+ a b ...)` — sums integer arguments.
 fn builtin_add(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     let mut total = 0i64;
@@ -294,4 +313,108 @@ fn builtin_merge(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> 
         }
     }
     Ok(Value::Record(merged))
+}
+
+/// `(> a b)`, `(< a b)`, `(>= a b)`, `(<= a b)` — numeric ordering comparisons.
+fn compare(op: &str, args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
+    if args.len() != 2 {
+        return Err(format!("{op} expects two numbers"));
+    }
+    let a = int_arg(&args[0], env.clone(), op)?;
+    let b = int_arg(&args[1], env.clone(), op)?;
+    let result = match op {
+        ">" => a > b,
+        "<" => a < b,
+        ">=" => a >= b,
+        "<=" => a <= b,
+        _ => unreachable!(),
+    };
+    Ok(Value::Bool(result))
+}
+
+/// `(= a b)` — equality over scalars: numbers, strings, and booleans.
+fn builtin_eq(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
+    if args.len() != 2 {
+        return Err("= expects two arguments".to_string());
+    }
+    let a = eval(&args[0], env.clone())?;
+    let b = eval(&args[1], env.clone())?;
+    let result = match (a, b) {
+        (Value::Int(x), Value::Int(y)) => x == y,
+        (Value::Float(x), Value::Float(y)) => x == y,
+        (Value::String(x), Value::String(y)) => x == y,
+        (Value::Bool(x), Value::Bool(y)) => x == y,
+        (a, b) => return Err(format!("= can't compare {a:?} and {b:?}")),
+    };
+    Ok(Value::Bool(result))
+}
+
+/// `(and a b ...)` — logical conjunction; evaluates every argument first.
+fn builtin_and(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
+    let mut result = true;
+    for arg in args {
+        match eval(arg, env.clone())? {
+            Value::Bool(b) => result = result && b,
+            other => return Err(format!("and expects booleans, got {other:?}")),
+        }
+    }
+    Ok(Value::Bool(result))
+}
+
+/// `(or a b ...)` — logical disjunction; evaluates every argument first.
+fn builtin_or(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
+    let mut result = false;
+    for arg in args {
+        match eval(arg, env.clone())? {
+            Value::Bool(b) => result = result || b,
+            other => return Err(format!("or expects booleans, got {other:?}")),
+        }
+    }
+    Ok(Value::Bool(result))
+}
+
+/// `(not x)` — logical negation.
+fn builtin_not(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
+    if args.len() != 1 {
+        return Err("not expects one argument".to_string());
+    }
+    match eval(&args[0], env.clone())? {
+        Value::Bool(b) => Ok(Value::Bool(!b)),
+        other => Err(format!("not expects a boolean, got {other:?}")),
+    }
+}
+
+/// `(- a b)` — subtracts two integers.
+fn builtin_sub(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
+    if args.len() != 2 {
+        return Err("- expects two numbers".to_string());
+    }
+    let a = int_arg(&args[0], env.clone(), "-")?;
+    let b = int_arg(&args[1], env.clone(), "-")?;
+    Ok(Value::Int(a - b))
+}
+
+/// `(* a b ...)` — multiplies integer arguments.
+fn builtin_mul(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
+    let mut total = 1i64;
+    for arg in args {
+        match eval(arg, env.clone())? {
+            Value::Int(n) => total *= n,
+            other => return Err(format!("* expects numbers, got {other:?}")),
+        }
+    }
+    Ok(Value::Int(total))
+}
+
+/// `(/ a b)` — integer division.
+fn builtin_div(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
+    if args.len() != 2 {
+        return Err("/ expects two numbers".to_string());
+    }
+    let a = int_arg(&args[0], env.clone(), "/")?;
+    let b = int_arg(&args[1], env.clone(), "/")?;
+    if b == 0 {
+        return Err("division by zero".to_string());
+    }
+    Ok(Value::Int(a / b))
 }
