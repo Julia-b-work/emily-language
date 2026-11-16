@@ -1,5 +1,7 @@
 # Emily
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A total, statically typed Lisp for configuration and data. It compiles to JSON,
 YAML, and TOML, and is designed to replace YAML/JSON where you need types,
 reuse, and safety.
