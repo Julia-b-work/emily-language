@@ -109,7 +109,7 @@ cargo test    # run the tests
 - [x] Evaluator (tree-walking)
 - [x] CLI + JSON output
 
-### v2
+### v0.2.0 (in progress)
 
 - [x] YAML and TOML output
 - [x] Imports with integrity checking

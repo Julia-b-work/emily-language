@@ -103,3 +103,28 @@ fn errors_on_division_by_zero() {
     let env = Env::new();
     assert!(eval(&forms[0], env).is_err());
 }
+
+#[test]
+fn annotated_def_still_defines() {
+    assert!(matches!(run("(def x : Int 42) x"), Value::Int(42)));
+}
+
+#[test]
+fn annotated_let_still_binds() {
+    assert!(matches!(run("(let [x : Int 7] (+ x 1))"), Value::Int(8)));
+}
+
+#[test]
+fn annotated_fn_params_still_work() {
+    assert!(matches!(
+        run("(def add : (Int -> Int -> Int) (fn (a : Int b : Int) (+ a b))) (add 2 3)"),
+        Value::Int(5)
+    ));
+}
+
+#[test]
+fn annotation_type_is_not_evaluated() {
+    // The type side is syntax only: `UnknownType` is never looked up at
+    // eval time. Resolution happens in the type checker, not the evaluator.
+    assert!(matches!(run("(def x : UnknownType 42) x"), Value::Int(42)));
+}

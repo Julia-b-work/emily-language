@@ -3,6 +3,27 @@
 All notable changes to this project are recorded here. Versions follow
 [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH.
 
+## [0.2.0] - 2026-11-16
+
+### Added
+- **Type annotation syntax.** `def`, `let`, and `fn` accept `: Type`
+  annotations — `(def x : Int 42)`, `(fn (a : Int b : Int) ...)`, n-ary
+  function types `(String -> Int -> Config)`. Annotations parse into `Ann`
+  AST nodes; the evaluator ignores them, so annotated programs still run
+  (nothing is checked yet).
+- **`Type` enum** (`src/types.rs`). `Int`, `Float`, `String`, `Bool`,
+  `List T`, record types, n-ary function types `(A -> B -> R)`, and named
+  types (`Server`).
+- **Example program.** `examples/typed.em`, a typed config using annotations.
+- **Spec and docs.** Type-checking rules documented in `specs.md` (structural
+  closed records, n-ary functions, monomorphic inference) and annotation
+  syntax in `syntax.md`.
+- **Tests.** Type-syntax tests; the suite grows from 52 to 69.
+
+### Changed
+- Roadmap: the post-v1 milestone is now v0.2.0, with static types and
+  inference as the headline item.
+
 ## [0.1.4] - 2026-09-29
 
 ### Added

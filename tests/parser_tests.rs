@@ -132,3 +132,66 @@ fn errors_report_position() {
     let err = Parser::new(tokens).parse().unwrap_err();
     assert!(err.contains("line 1, column 1"), "got: {err}");
 }
+
+#[test]
+fn parses_def_type_annotation() {
+    assert_eq!(
+        parse("(def x : Int 42)"),
+        vec![Expr::List(vec![
+            Expr::Symbol("def".to_string()),
+            Expr::Ann {
+                value: Box::new(Expr::Symbol("x".to_string())),
+                ty: Box::new(Expr::Symbol("Int".to_string())),
+            },
+            Expr::Int(42),
+        ])]
+    );
+}
+
+#[test]
+fn parses_fn_parameter_annotation() {
+    assert_eq!(
+        parse("(fn (x : Int) x)"),
+        vec![Expr::List(vec![
+            Expr::Symbol("fn".to_string()),
+            Expr::List(vec![Expr::Ann {
+                value: Box::new(Expr::Symbol("x".to_string())),
+                ty: Box::new(Expr::Symbol("Int".to_string())),
+            }]),
+            Expr::Symbol("x".to_string()),
+        ])]
+    );
+}
+
+#[test]
+fn parses_nested_type_annotation() {
+    // The type side is an ordinary form: `(List Int)` and `(Int -> Bool)`.
+    assert_eq!(
+        parse("(def xs : (List Int) xs)"),
+        vec![Expr::List(vec![
+            Expr::Symbol("def".to_string()),
+            Expr::Ann {
+                value: Box::new(Expr::Symbol("xs".to_string())),
+                ty: Box::new(Expr::List(vec![
+                    Expr::Symbol("List".to_string()),
+                    Expr::Symbol("Int".to_string()),
+                ])),
+            },
+            Expr::Symbol("xs".to_string()),
+        ])]
+    );
+}
+
+#[test]
+fn annotation_errors_with_missing_side() {
+    let err = parse_result("(: Int)").unwrap_err();
+    assert!(err.contains("nothing before ':'"), "got: {err}");
+    let err = parse_result("(x :)").unwrap_err();
+    assert!(err.contains("nothing after ':'"), "got: {err}");
+}
+
+#[test]
+fn annotation_errors_report_position() {
+    let err = parse_result("(def x : )").unwrap_err();
+    assert!(err.contains("line 1"), "got: {err}");
+}

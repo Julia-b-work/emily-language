@@ -1,10 +1,10 @@
-# Emily — Developer Diary
+# Emily - Developer Diary
 
 My thoughts about building Emily. Written after each dev session, just for fun.
 
 ---
 
-## 2026-09-15 — Starting the lexer
+## 2026-09-15 - Starting the lexer
 
 - I consider this the real start of the project, although I have already worked on other important aspects of the project (i.e grammar, tokens and general design decisions) the lexer is the first actual hard part.
 
@@ -18,7 +18,7 @@ My thoughts about building Emily. Written after each dev session, just for fun.
 
 ---
 
-## 2026-09-16 — Finishing the lexer
+## 2026-09-16 - Finishing the lexer
 
 - Finished the lexer today, writing `lex_number`, `lex_symbol`, `lex_keyword` and the `tokenize()` function that ties everything together.
 
@@ -34,7 +34,7 @@ My thoughts about building Emily. Written after each dev session, just for fun.
 
 ---
 
-## 2026-09-17 — The parser
+## 2026-09-17 - The parser
 
 - Built the parser, which turns the flat token list into a tree (the AST). It's a recursive-descent parser, but for a Lisp it's almost trivial — the parentheses do all the structuring for you.
 
@@ -48,7 +48,7 @@ My thoughts about building Emily. Written after each dev session, just for fun.
 
 ---
 
-## 2026-09-19 — The evaluator: values and scopes
+## 2026-09-19 - The evaluator: values and scopes
 
 - Started the evaluator today, building the two data structures it needs: `Value` (what expressions become) and `Env` (scopes).
 
@@ -64,7 +64,7 @@ My thoughts about building Emily. Written after each dev session, just for fun.
 
 ---
 
-## 2026-09-20 — The evaluator: it runs!
+## 2026-09-20 - The evaluator: it runs!
 
 - Wrote `eval.rs` — the tree-walker. Atoms evaluate to themselves, symbols get looked up, and lists dispatch to special forms.
 
@@ -76,7 +76,7 @@ My thoughts about building Emily. Written after each dev session, just for fun.
 
 - Next: functions and closures, then the builtins. I'm excited!
 
-## 2026-09-21 — v1 is done!!!
+## 2026-09-21 - v1 is done!!!
 
 - Finished the evaluator today: `fn` and closures, plus the builtins (`+`, `concat`, `show`, `fold`, `append`, `merge`) and field access.
 
@@ -96,7 +96,7 @@ My thoughts about building Emily. Written after each dev session, just for fun.
 
 ---
 
-## 2026-09-25 — YAML and TOML output
+## 2026-09-25 - YAML and TOML output
 
 - Emily now compiles to three formats: JSON, YAML, and TOML!
 
@@ -112,7 +112,7 @@ My thoughts about building Emily. Written after each dev session, just for fun.
 
 ---
 
-## 2026-09-28 — Imports and better errors
+## 2026-09-28 - Imports and better errors
 
 - Emily can now `(import "file.em")`! Config split across files and reused, which is the whole point of the language. Paths resolve relative to the importing file, and circular imports are caught before they loop forever.
 
@@ -128,7 +128,7 @@ My thoughts about building Emily. Written after each dev session, just for fun.
 
 ---
 
-## 2026-09-29 — Filling the builtins gap
+## 2026-09-29 - Filling the builtins gap
 
 - Emily can compare and do math now! Added `=`, `>`, `<`, `>=`, `<=`, `and`, `or`, `not`, `-`, `*`, and `/`. The builtins were missing the boring-but-necessary stuff, comparison, booleans, and any math besides `+`.
 
@@ -145,3 +145,21 @@ My thoughts about building Emily. Written after each dev session, just for fun.
 - Emily is a maths girl, so I think she would like these new additions :) .
 
 - Next: static types and inference, for real this time :p . That's the big one the README has been promising since v1.
+
+---
+
+## 2026-11-16 - Type annotations parse
+
+- First real piece of the type system is done today: the parser now reads `: Type` annotations. `(def x : Int 42)`, `(fn (a : Int b : Int) ...)`, n-ary function types like `(String -> Int -> Config)`. The evaluator ignores them for now.
+
+- The lexer had the `Colon` token ready since September (sometimes the extra work pays off). The parser just needed to turn `value : type` into an `Ann` node and pop the previous item. Took maybe twenty lines.
+
+- The fun bug of the day: I taught the list parser about `:`, ran the tests, and `(let [x : Int 7] ...)` blew up. `let` bindings live in a vector, not a list. So the annotation logic became a shared helper used by both.
+
+- Also found a gap in the `Type` enum while running the spec's examples: they use named types like `Server` and `Config`, so `Type::Named(String)` got added. Any non-primitive symbol parses as a named type and the checker resolves it later.
+
+- Tests went from 52 to 69. The acceptance tests now run the spec's typed examples as written.
+
+- Took a break from the project to focus on college and personal problems, but now we are fully back!
+
+- Next session: `infer` and `check`. Records are structural and closed, functions are n-ary, inference is monomorphic. The design is locked, the syntax layer is in place. Let's do it!

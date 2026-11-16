@@ -1,9 +1,11 @@
 //! Acceptance tests: the example programs from `docs/specs.md`, asserting they
 //! produce the exact JSON output the spec promises.
 //!
-//! Examples 2 and 4 are adapted slightly: the spec includes type annotations
-//! (`: Server`, `: (String -> Int -> Config)`), which are v2. These tests run
-//! the same behavior without the annotation.
+//! Examples 2 and 4 in the spec carry type annotations (`: Server`,
+//! `: (String -> Int -> Config)`). Annotations now parse and are ignored by
+//! the evaluator, so the typed forms run as written; the untyped versions are
+//! also kept below. (The spec's `(type Server ...)` declaration form is not
+//! implemented yet, so those tests start from the annotated `def`.)
 
 use emily::env::Env;
 use emily::eval::eval;
@@ -66,5 +68,23 @@ fn example_5_fold() {
             "(def services [\"api\" \"worker\" \"scheduler\"]) (def instances (fold services [] (fn (acc name) (append acc {:name name :port 8080 :replicas 3})))) instances"
         ),
         "[{\"name\": \"api\", \"port\": 8080, \"replicas\": 3}, {\"name\": \"worker\", \"port\": 8080, \"replicas\": 3}, {\"name\": \"scheduler\", \"port\": 8080, \"replicas\": 3}]"
+    );
+}
+
+#[test]
+fn example_2_typed_record() {
+    assert_eq!(
+        run_json("(def server : Server {:host \"localhost\" :port 8080 :debug false}) server"),
+        "{\"host\": \"localhost\", \"port\": 8080, \"debug\": false}"
+    );
+}
+
+#[test]
+fn example_4_typed_function() {
+    assert_eq!(
+        run_json(
+            "(def make-config : (String -> Int -> Config) (fn (name port) {:name name :port port :url (concat \"http://\" name \":\" (show port))})) (make-config \"api\" 8080)"
+        ),
+        "{\"name\": \"api\", \"port\": 8080, \"url\": \"http://api:8080\"}"
     );
 }

@@ -64,6 +64,10 @@ pub fn eval(expr: &Expr, env: Rc<RefCell<Env>>) -> Result<Value, String> {
 
         Expr::List(items) => eval_list(items, env),
 
+        // Type annotations are syntax only for now: evaluate the annotated
+        // value and ignore the type. The type checker will consume these later.
+        Expr::Ann { value, .. } => eval(value, env),
+
         other => Err(format!("not implemented yet: {other:?}")),
     }
 }
@@ -100,12 +104,23 @@ fn eval_list(items: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     }
 }
 
+/// Extracts a binding name from an expression, unwrapping type annotations
+/// (`x : Int` names `x`). Returns `None` for anything that is not a symbol.
+fn binding_name(expr: &Expr) -> Option<&str> {
+    match expr {
+        Expr::Symbol(n) => Some(n),
+        Expr::Ann { value, .. } => binding_name(value),
+        _ => None,
+    }
+}
+
 /// Evaluates `(def name expr)`, binding `name` in the current scope.
 fn eval_def(rest: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
-    let name = match rest.first() {
-        Some(Expr::Symbol(n)) => n.clone(),
-        _ => return Err("def needs a name".to_string()),
-    };
+    let name = rest
+        .first()
+        .and_then(binding_name)
+        .ok_or("def needs a name")?
+        .to_string();
     let value_expr = rest.last().ok_or("def needs a value")?;
     let value = eval(value_expr, env.clone())?;
     env.borrow_mut().define(name, value.clone());
@@ -127,10 +142,9 @@ fn eval_let(rest: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     let child = Env::child(env);
     let mut i = 0;
     while i < bindings.len() {
-        let name = match &bindings[i] {
-            Expr::Symbol(n) => n.clone(),
-            _ => return Err("let binding name must be a symbol".to_string()),
-        };
+        let name = binding_name(&bindings[i])
+            .ok_or("let binding name must be a symbol")?
+            .to_string();
         let value = eval(&bindings[i + 1], child.clone())?;
         child.borrow_mut().define(name, value);
         i += 2;
@@ -157,9 +171,9 @@ fn eval_fn(rest: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
         Some(Expr::List(p)) => {
             let mut names = Vec::new();
             for param in p {
-                match param {
-                    Expr::Symbol(n) => names.push(n.clone()),
-                    _ => return Err("fn parameters must be symbols".to_string()),
+                match binding_name(param) {
+                    Some(n) => names.push(n.to_string()),
+                    None => return Err("fn parameters must be symbols".to_string()),
                 }
             }
             names

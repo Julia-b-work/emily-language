@@ -23,6 +23,9 @@ pub enum Expr {
     Symbol(String),
     /// A record key, e.g. `:port`.
     Keyword(String),
+    /// A type annotation, e.g. `x : Int`. Parsed and stored, but the evaluator
+    /// ignores it for now; the type checker will consume these nodes.
+    Ann { value: Box<Expr>, ty: Box<Expr> },
     /// A list of forms: `(a b c)`.
     List(Vec<Expr>),
     /// A record: `{:key value ...}`, stored as key/value pairs.

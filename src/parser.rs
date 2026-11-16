@@ -80,6 +80,11 @@ impl Parser {
                     self.advance();
                     break;
                 }
+                Some(tok) if tok.kind == TokenKind::Colon => {
+                    let (line, col) = (tok.line, tok.col);
+                    self.advance();
+                    self.parse_annotation(&mut items, line, col)?;
+                }
                 Some(_) => items.push(self.parse_form()?),
             }
         }
@@ -96,10 +101,45 @@ impl Parser {
                     self.advance();
                     break;
                 }
+                Some(tok) if tok.kind == TokenKind::Colon => {
+                    let (line, col) = (tok.line, tok.col);
+                    self.advance();
+                    self.parse_annotation(&mut items, line, col)?;
+                }
                 Some(_) => items.push(self.parse_form()?),
             }
         }
         Ok(Expr::Vector(items))
+    }
+
+    /// Handles a `:` inside a list or vector: binds the previous item to the
+    /// next form as an [`Expr::Ann`] (`value : type`).
+    fn parse_annotation(
+        &mut self,
+        items: &mut Vec<Expr>,
+        line: usize,
+        col: usize,
+    ) -> Result<(), String> {
+        let value = items.pop().ok_or_else(|| {
+            format!("type annotation with nothing before ':' (line {line}, column {col})")
+        })?;
+        let ty = match self.peek() {
+            None
+            | Some(Token {
+                kind: TokenKind::RParen | TokenKind::RBracket,
+                ..
+            }) => {
+                return Err(format!(
+                    "type annotation with nothing after ':' (line {line}, column {col})"
+                ));
+            }
+            _ => self.parse_form()?,
+        };
+        items.push(Expr::Ann {
+            value: Box::new(value),
+            ty: Box::new(ty),
+        });
+        Ok(())
     }
 
     /// Parses the key/value pairs of a `{ ... }` record, up to the closing `}`.

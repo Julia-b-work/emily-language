@@ -85,6 +85,24 @@ Only the taken branch is evaluated.
 
 Functions are values — you can pass them around and store them.
 
+## Type annotations — `: Type`
+
+A name or parameter can carry a type annotation:
+
+```lisp
+(def port : Int 8080)
+
+(def make-config : (String -> Int -> Config)
+  (fn (name : String port : Int) ...))
+```
+
+Type syntax: `Int`, `Float`, `String`, `Bool`, `(List T)`, record types
+(`{:a T :b U}`), named types (`Server`), and n-ary function types
+(`(A -> B -> R)` = parameters `A, B`, result `R`).
+
+Annotations are parsed and stored in the AST, and the evaluator ignores them:
+nothing is checked yet. The type checker comes next.
+
 ## Field access — `.`
 
 ```lisp

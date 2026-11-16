@@ -145,6 +145,19 @@ fails. `:type` checks the imported value against a type.
 The output boundary is strict: functions and types never appear in output. Only
 pure data — numbers, strings, booleans, lists, records — is serialized.
 
+### Type checking
+
+- **Records are structural and closed.** A record has a given type when it has
+  *exactly* that type's fields, each with the right type. Extra fields are an
+  error; missing fields are an error. `(merge a b)` composes: its type is the
+  union of `a` and `b`'s fields, later keys winning.
+- **Function types are n-ary.** `(A -> B -> R)` denotes a function taking `A`
+  and `B` and returning `R`. `fn` takes a parameter list, so there is no
+  currying.
+- **Inference is monomorphic (first version).** No `forall`, no generalization:
+  each expression has one concrete type. Where a type cannot be inferred — the
+  parameters of a bare `(fn (x) ...)` — an annotation is required.
+
 ---
 
 ## Example programs
