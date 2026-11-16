@@ -1,5 +1,7 @@
 # Emily
 
+[![Version](https://img.shields.io/github/v/tag/Julia-b-work/emily-language)](https://github.com/Julia-b-work/emily-language/releases)
+[![Tests](https://github.com/Julia-b-work/emily-language/actions/workflows/test.yml/badge.svg)](https://github.com/Julia-b-work/emily-language/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A total, statically typed Lisp for configuration and data. It compiles to JSON,
