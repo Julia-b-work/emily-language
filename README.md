@@ -30,7 +30,7 @@ I hope this language is as safe as she makes me feel.
 }
 ```
 
-Configuration with types and reuse .Functions and records
+Configuration with types and reuse. Functions and records
 instead of copy-pasted YAML.
 
 ## Demo
@@ -49,7 +49,7 @@ v1 is complete. The pipeline is:
 ## Documentation
 
 - [`docs/syntax.md`](docs/syntax.md): a quick tour of the syntax
-- [`docs/specs.md`](docs/specs.md):  the language specification
+- [`docs/specs.md`](docs/specs.md): the language specification
 - [`docs/grammar.ebnf`](docs/grammar.ebnf): lexical and syntactic grammar
 - [`docs/ambiguities.md`](docs/ambiguities.md): resolved syntax ambiguities
 - [`docs/dev_diary.md`](docs/dev_diary.md): developer diary
@@ -75,6 +75,7 @@ cargo test    # run the tests
 │   ├── env.rs     # scopes
 │   ├── eval.rs    # AST → values
 │   ├── import.rs  # (import "file.em") expansion
+│   ├── types.rs   # the Type enum (annotations)
 │   ├── lib.rs     # module declarations
 │   └── main.rs    # CLI entry point
 ├── tests/
@@ -82,7 +83,8 @@ cargo test    # run the tests
 │   ├── lexer_tests.rs
 │   ├── parser_tests.rs
 │   ├── eval_tests.rs
-│   └── acceptance_tests.rs
+│   ├── acceptance_tests.rs
+│   └── types_tests.rs
 ├── examples/
 │   ├── hello.em
 │   ├── env_config.em
@@ -90,6 +92,7 @@ cargo test    # run the tests
 │   ├── database.em        # imported by config.em
 │   ├── server.em          # imported by config.em
 │   ├── config.em          # imports database.em + server.em
+│   ├── typed.em           # type annotations (not checked yet)
 │   └── error_example.em   # deliberately broken (shows error messages)
 └── docs/
     ├── specs.md
