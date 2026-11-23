@@ -36,7 +36,7 @@ I hope this language is as safe as she makes me feel.
 }
 ```
 
-Configuration with functions, records, and reuse — instead of
+Configuration with functions, records, and reuse, instead of
 copy-pasted YAML.
 
 ## Demo
