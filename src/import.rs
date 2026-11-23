@@ -1,11 +1,3 @@
-//! Imports: `(import "path.em")` — splice another file's forms into the program.
-//!
-//! Imports are a *pre-evaluation* pass: `expand_imports` runs after parsing and
-//! before `eval`, replacing each top-level `(import "path")` with the imported
-//! file's own (recursively expanded) forms. This keeps `eval` unchanged.
-//!
-//! Paths resolve relative to the importing file's directory, and a stack of
-//! in-progress files catches circular imports.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -14,14 +6,11 @@ use crate::ast::Expr;
 use crate::lexer::Lexer;
 use crate::parser::Parser;
 
-/// Expands every top-level `(import "path")` in `forms`, resolving paths
-/// relative to `base_dir` and splicing the imported file's forms in place.
 pub fn expand_imports(forms: Vec<Expr>, base_dir: &Path) -> Result<Vec<Expr>, String> {
     let mut stack: Vec<PathBuf> = Vec::new();
     expand(forms, base_dir, &mut stack)
 }
 
-/// Walks a list of forms, replacing each import with the file's expanded forms.
 fn expand(
     forms: Vec<Expr>,
     base_dir: &Path,
@@ -38,11 +27,6 @@ fn expand(
     Ok(out)
 }
 
-/// If `form` is an `(import ...)` list, returns the path string; otherwise `None`.
-///
-/// A list whose head is the symbol `import` is treated as an import. A
-/// malformed import (wrong arity or a non-string path) is an error rather than
-/// silently falling through to "unknown function".
 fn as_import(form: &Expr) -> Result<Option<String>, String> {
     let Expr::List(items) = form else {
         return Ok(None);
@@ -62,8 +46,6 @@ fn as_import(form: &Expr) -> Result<Option<String>, String> {
     }
 }
 
-/// Loads the file at `path` (relative to `base_dir`), lexes, parses, and
-/// recursively expands its own imports, returning the spliced forms.
 fn load_import(path: &str, base_dir: &Path, stack: &mut Vec<PathBuf>) -> Result<Vec<Expr>, String> {
     let resolved = if Path::new(path).is_absolute() {
         PathBuf::from(path)

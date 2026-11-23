@@ -1,8 +1,6 @@
-//! Type expressions: the `Type` enum and parsing type syntax from the AST.
 
 use crate::ast::Expr;
 
-/// A type in Emily's type system (first version: monomorphic).
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     Int,
@@ -15,13 +13,10 @@ pub enum Type {
         params: Vec<Type>,
         ret: Box<Type>,
     },
-    /// A named type, e.g. `Server`. Resolved structurally by the type checker;
-    /// at the syntax layer any non-primitive symbol becomes a `Named`.
     Named(String),
 }
 
 impl Type {
-    /// Parses a type from an already-parsed expression.
     pub fn from_expr(expr: &Expr) -> Result<Type, String> {
         match expr {
             Expr::Symbol(name) => match name.as_str() {
@@ -57,9 +52,6 @@ impl Type {
     }
 }
 
-/// Parses `(A -> B -> R)` into `Type::Fn { params: [A, B], ret: R }`.
-///
-/// Minimal version for now; the design discussion may change this.
 fn parse_fn_type(items: &[Expr]) -> Result<Type, String> {
     let parts: Vec<&[Expr]> = items
         .split(|it| matches!(it, Expr::Symbol(s) if s == "->"))

@@ -1,41 +1,27 @@
-//! The parser: turns a flat token stream into a tree of [`Expr`]s.
-//!
-//! A recursive-descent parser. This is trivial for a Lisp because the
-//! delimiters (`( )`, `[ ]`, `{ }`) define the structure directly.
-//!
-//! Parse errors report the offending token's line and column.
 
 use crate::ast::Expr;
 use crate::token::{Token, TokenKind};
 
-/// A cursor over the token stream — the same idea as the lexer, but over
-/// [`Token`]s instead of characters.
 pub struct Parser {
-    /// The tokens produced by the lexer.
     tokens: Vec<Token>,
-    /// The current cursor position (an index into `tokens`).
     pos: usize,
 }
 
 impl Parser {
-    /// Builds a parser over the given token stream.
     pub fn new(tokens: Vec<Token>) -> Self {
         Parser { tokens, pos: 0 }
     }
 
-    /// Returns the token at the cursor without moving, or `None` at end of input.
     fn peek(&self) -> Option<&Token> {
         self.tokens.get(self.pos)
     }
 
-    /// Returns the token at the cursor and advances by one.
     fn advance(&mut self) -> Option<Token> {
         let t = self.tokens.get(self.pos).cloned();
         self.pos += 1;
         t
     }
 
-    /// Parses a whole program: a sequence of top-level forms.
     pub fn parse(mut self) -> Result<Vec<Expr>, String> {
         let mut forms = Vec::new();
         while self.peek().is_some() {
@@ -44,7 +30,6 @@ impl Parser {
         Ok(forms)
     }
 
-    /// Parses a single form, recursing for compound forms and quotes.
     fn parse_form(&mut self) -> Result<Expr, String> {
         let token = self
             .advance()
@@ -70,7 +55,6 @@ impl Parser {
         }
     }
 
-    /// Parses the elements of a `( ... )` list, up to the closing `)`.
     fn parse_list(&mut self) -> Result<Expr, String> {
         let mut items = Vec::new();
         loop {
@@ -91,7 +75,6 @@ impl Parser {
         Ok(Expr::List(items))
     }
 
-    /// Parses the elements of a `[ ... ]` vector, up to the closing `]`.
     fn parse_vector(&mut self) -> Result<Expr, String> {
         let mut items = Vec::new();
         loop {
@@ -112,8 +95,6 @@ impl Parser {
         Ok(Expr::Vector(items))
     }
 
-    /// Handles a `:` inside a list or vector: binds the previous item to the
-    /// next form as an [`Expr::Ann`] (`value : type`).
     fn parse_annotation(
         &mut self,
         items: &mut Vec<Expr>,
@@ -142,7 +123,6 @@ impl Parser {
         Ok(())
     }
 
-    /// Parses the key/value pairs of a `{ ... }` record, up to the closing `}`.
     fn parse_record(&mut self) -> Result<Expr, String> {
         let mut fields = Vec::new();
         loop {

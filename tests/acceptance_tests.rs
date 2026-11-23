@@ -1,11 +1,3 @@
-//! Acceptance tests: the example programs from `docs/specs.md`, asserting they
-//! produce the exact JSON output the spec promises.
-//!
-//! Examples 2 and 4 in the spec carry type annotations (`: Server`,
-//! `: (String -> Int -> Config)`). Annotations now parse and are ignored by
-//! the evaluator, so the typed forms run as written; the untyped versions are
-//! also kept below. (The spec's `(type Server ...)` declaration form is not
-//! implemented yet, so those tests start from the annotated `def`.)
 
 use emily::env::Env;
 use emily::eval::eval;
@@ -13,7 +5,6 @@ use emily::lexer::Lexer;
 use emily::parser::Parser;
 use emily::value::Value;
 
-/// Runs a whole program through lex → parse → eval, returning its JSON.
 fn run_json(src: &str) -> String {
     let tokens = Lexer::new(src).tokenize().unwrap();
     let forms = Parser::new(tokens).parse().unwrap();

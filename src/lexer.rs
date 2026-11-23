@@ -1,32 +1,14 @@
-//! The lexer: turns source text into a stream of tokens.
-//!
-//! The lexer walks the input one character at a time and produces a flat list
-//! of [`Token`]s, resolving the ambiguities documented in `docs/ambiguities.md`
-//! (e.g. `:` as keyword vs annotation, `-` as symbol vs negative number).
-//!
-//! Each token records the line/column where it starts, and lexing errors carry
-//! a position too.
 
 use crate::token::{Token, TokenKind};
 
-/// A cursor over the source text.
-///
-/// Holds the input as a list of characters plus a position, and exposes
-/// `peek`/`advance` primitives that the scanning methods build on. It also
-/// tracks the current line and column (both 1-based) for error reporting.
 pub struct Lexer {
-    /// The source, split into individual characters.
     chars: Vec<char>,
-    /// The current cursor position (an index into `chars`).
     pos: usize,
-    /// The current 1-based line number.
     line: usize,
-    /// The current 1-based column number.
     col: usize,
 }
 
 impl Lexer {
-    /// Builds a lexer over the given source text.
     pub fn new(source: &str) -> Self {
         Lexer {
             chars: source.chars().collect(),
@@ -36,13 +18,10 @@ impl Lexer {
         }
     }
 
-    /// Returns the character at the cursor without moving, or `None` at end of input.
     fn peek(&self) -> Option<char> {
         self.chars.get(self.pos).copied()
     }
 
-    /// Returns the character at the cursor, advancing the cursor and updating
-    /// the line/column tracking.
     fn advance(&mut self) -> Option<char> {
         let c = self.peek()?;
         self.pos += 1;
@@ -55,17 +34,14 @@ impl Lexer {
         Some(c)
     }
 
-    /// Returns the character just after the cursor without moving (used for lookahead).
     fn peek_next(&self) -> Option<char> {
         self.chars.get(self.pos + 1).copied()
     }
 
-    /// Formats an error message with the current line and column.
     fn error(&self, msg: &str) -> String {
         format!("{msg} (line {}, column {})", self.line, self.col)
     }
 
-    /// Skips whitespace and `;` line comments, leaving the cursor on the next real token.
     fn skip_whitespace_and_comments(&mut self) {
         loop {
             match self.peek() {
@@ -85,7 +61,6 @@ impl Lexer {
         }
     }
 
-    /// Reads a string literal, returning a `String` token with escapes translated.
     fn lex_string(&mut self) -> Result<TokenKind, String> {
         self.advance();
         let mut out = String::new();
@@ -111,7 +86,6 @@ impl Lexer {
         Err(self.error("unterminated string"))
     }
 
-    /// Reads a number, returning an `Int` or `Float` token.
     fn lex_number(&mut self) -> Result<TokenKind, String> {
         let mut text = String::new();
 
@@ -156,9 +130,6 @@ impl Lexer {
         Ok(TokenKind::Int(value))
     }
 
-    /// Reads a run of symbol characters, returning them as a `String`.
-    ///
-    /// A symbol character is a symbol-start, a digit, or a `.` (field access).
     fn read_symbol_chars(&mut self) -> String {
         let mut s = String::new();
         while let Some(c) = self.peek() {
@@ -172,7 +143,6 @@ impl Lexer {
         s
     }
 
-    /// Reads a symbol, mapping the spellings `true`/`false` to `Bool` tokens.
     fn lex_symbol(&mut self) -> TokenKind {
         let s = self.read_symbol_chars();
         match s.as_str() {
@@ -182,7 +152,6 @@ impl Lexer {
         }
     }
 
-    /// Reads a keyword (`:name`). Called only after the `:` is confirmed.
     fn lex_keyword(&mut self) -> TokenKind {
         self.advance();
         let s = self.read_symbol_chars();
@@ -273,10 +242,6 @@ impl Lexer {
     }
 }
 
-/// Whether `c` is a valid first character of a symbol.
-///
-/// True for letters and the punctuation characters listed in the lexical
-/// grammar (`_ + - * / ! ? < > =`).
 fn is_symbol_start(c: char) -> bool {
     c.is_alphabetic() || matches!(c, '_' | '+' | '-' | '*' | '/' | '!' | '?' | '<' | '>' | '=')
 }

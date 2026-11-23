@@ -1,12 +1,9 @@
-//! Integration tests for the type syntax layer: turning annotation ASTs into
-//! [`Type`] values. No checking happens here; this is parse-only.
 
 use emily::ast::Expr;
 use emily::lexer::Lexer;
 use emily::parser::Parser;
 use emily::types::Type;
 
-/// Parses a single annotated form and returns the parsed type (or the error).
 fn ann_type_result(src: &str) -> Result<Type, String> {
     let tokens = Lexer::new(src).tokenize().unwrap();
     let forms = Parser::new(tokens).parse().unwrap();
@@ -19,7 +16,6 @@ fn ann_type_result(src: &str) -> Result<Type, String> {
     }
 }
 
-/// Like [`ann_type_result`], panicking on a parse error.
 fn ann_type(src: &str) -> Type {
     ann_type_result(src).unwrap()
 }

@@ -1,4 +1,3 @@
-//! Integration tests for the lexer: source text → tokens.
 
 use emily::lexer::Lexer;
 use emily::token::{Token, TokenKind};
@@ -7,7 +6,6 @@ fn lex(src: &str) -> Vec<Token> {
     Lexer::new(src).tokenize().unwrap()
 }
 
-/// Lexes and drops positions, so tests can assert on kinds only.
 fn kinds(src: &str) -> Vec<TokenKind> {
     lex(src).into_iter().map(|t| t.kind).collect()
 }

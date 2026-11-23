@@ -1,44 +1,26 @@
-//! The type checker: walks the AST and computes the type of each expression.
-//!
-//! `type_check` is the static twin of [`crate::eval::eval`]: it descends the
-//! same tree, but instead of producing runtime values it produces
-//! [`Type`]s. Special forms (`def`, `let`, `if`, `fn`) are dispatched in
-//! `type_list`, along with the built-in functions and user-function calls.
 
 use crate::ast::Expr;
 use crate::types::Type;
 use std::collections::HashMap;
 
-/// A type-checking scope: names bound to their types, plus an optional parent
-/// scope. Looking up a name walks up the chain, so inner scopes see (and
-/// shadow) outer bindings.
-///
-/// The parent is a plain `&` reference: type checking is a straight-line walk
-/// with strictly nested scopes, so a child never outlives its parent and no
-/// `Rc`/`RefCell` machinery is needed (unlike [`crate::env::Env`], which
-/// closures capture at runtime).
 pub struct Ctx<'a> {
     bindings: HashMap<String, Type>,
     parent: Option<&'a Ctx<'a>>,
 }
 
 impl<'a> Ctx<'a> {
-    /// Creates a new, empty top-level scope.
     pub fn new() -> Self {
         Ctx { bindings: HashMap::new(), parent: None }
     }
 
-    /// Creates a new scope nested inside `parent`.
     pub fn child(parent: &'a Ctx<'a>) -> Self {
         Ctx { bindings: HashMap::new(), parent: Some(parent) }
     }
 
-    /// Binds `name` to `ty` in this scope (shadowing any existing binding).
     pub fn define(&mut self, name: String, ty: Type) {
         self.bindings.insert(name, ty);
     }
 
-    /// Looks up `name`, checking this scope then walking up the parent chain.
     pub fn get(&self, name: &str) -> Option<Type> {
         if let Some(ty) = self.bindings.get(name) {
             return Some(ty.clone());
@@ -115,8 +97,6 @@ pub fn type_check(expr: &Expr, ctx: &mut Ctx) -> Result<Type, String> {
     }
 }
 
-/// Type-checks a whole program: every top-level form in order, in one shared
-/// root scope (later `def`s see earlier ones).
 pub fn typecheck(forms: &[Expr]) -> Result<(), String> {
     let mut ctx = Ctx::new();
     for form in forms {
@@ -125,8 +105,6 @@ pub fn typecheck(forms: &[Expr]) -> Result<(), String> {
     Ok(())
 }
 
-/// Extracts a binding name from an expression, unwrapping type annotations
-/// (`x : Int` names `x`). Returns `None` for anything that is not a symbol.
 fn binding_name(expr: &Expr) -> Option<&str> {
     match expr {
         Expr::Symbol(n) => Some(n),
@@ -135,8 +113,6 @@ fn binding_name(expr: &Expr) -> Option<&str> {
     }
 }
 
-/// Type-checks a list by dispatching on its head symbol: special forms
-/// (`def`, `let`, `if`, `fn`), the built-in functions, or a user-function call.
 fn type_list(items: &[Expr], ctx: &mut Ctx) -> Result<Type, String> {
     let (head, rest) = items.split_first().ok_or("empty list")?;
     match head {
@@ -160,8 +136,6 @@ fn type_list(items: &[Expr], ctx: &mut Ctx) -> Result<Type, String> {
     }
 }
 
-/// `(def name expr)` or `(def name : Type expr)` — checks the value against
-/// the annotation (if any) and binds the name to its type in the current scope.
 fn type_def(rest: &[Expr], ctx: &mut Ctx) -> Result<Type, String> {
     let [name_expr, value_expr] = rest else {
         return Err("def needs a name and a value".to_string());
@@ -180,8 +154,6 @@ fn type_def(rest: &[Expr], ctx: &mut Ctx) -> Result<Type, String> {
     Ok(value_ty)
 }
 
-/// `(let [name value ...] body)` — checks the bindings sequentially in a fresh
-/// child scope (later bindings see earlier ones), then the body in that scope.
 fn type_let(rest: &[Expr], ctx: &mut Ctx) -> Result<Type, String> {
     let bindings = match rest.first() {
         Some(Expr::Vector(b)) => b,
@@ -212,8 +184,6 @@ fn type_let(rest: &[Expr], ctx: &mut Ctx) -> Result<Type, String> {
     type_check(body, &mut child)
 }
 
-/// `(if cond then else)` — the condition must be a `Bool`, and both branches
-/// must have the same type, which is the type of the whole form.
 fn type_if(rest: &[Expr], ctx: &mut Ctx) -> Result<Type, String> {
     if rest.len() != 3 {
         return Err("if needs a condition, then-branch, and else-branch".to_string());
@@ -232,9 +202,6 @@ fn type_if(rest: &[Expr], ctx: &mut Ctx) -> Result<Type, String> {
     Ok(then_ty)
 }
 
-/// `(fn (args) body)` — every parameter must be annotated (`(fn (a : Int) ...)`,
-/// the monomorphic rule); the body is checked in a child scope holding the
-/// parameters, and its type is the return type.
 fn type_fn(rest: &[Expr], ctx: &mut Ctx) -> Result<Type, String> {
     let params = match rest.first() {
         Some(Expr::List(p)) => p,
@@ -263,7 +230,6 @@ fn type_fn(rest: &[Expr], ctx: &mut Ctx) -> Result<Type, String> {
     Ok(Type::Fn { params: param_tys, ret: Box::new(ret) })
 }
 
-/// `(+ a b ...)`, `(- a b)`, `(* a b ...)`, `(/ a b)` — integer arithmetic.
 fn numeric_builtin(op: &str, args: &[Expr], ctx: &mut Ctx) -> Result<Type, String> {
     for arg in args {
         let ty = type_check(arg, ctx)?;
@@ -274,7 +240,6 @@ fn numeric_builtin(op: &str, args: &[Expr], ctx: &mut Ctx) -> Result<Type, Strin
     Ok(Type::Int)
 }
 
-/// `(> a b)`, `(< a b)`, `(>= a b)`, `(<= a b)` — numeric ordering comparisons.
 fn compare_builtin(op: &str, args: &[Expr], ctx: &mut Ctx) -> Result<Type, String> {
     if args.len() != 2 {
         return Err(format!("{op} expects two numbers"));
@@ -288,7 +253,6 @@ fn compare_builtin(op: &str, args: &[Expr], ctx: &mut Ctx) -> Result<Type, Strin
     Ok(Type::Bool)
 }
 
-/// `(and a b ...)` and `(or a b ...)` — boolean logic.
 fn bool_builtin(op: &str, args: &[Expr], ctx: &mut Ctx) -> Result<Type, String> {
     for arg in args {
         let ty = type_check(arg, ctx)?;
@@ -299,7 +263,6 @@ fn bool_builtin(op: &str, args: &[Expr], ctx: &mut Ctx) -> Result<Type, String> 
     Ok(Type::Bool)
 }
 
-/// `(not x)` — logical negation.
 fn not_builtin(op: &str, args: &[Expr], ctx: &mut Ctx) -> Result<Type, String> {
     if args.len() != 1 {
         return Err(format!("{op} expects one argument"));
@@ -311,7 +274,6 @@ fn not_builtin(op: &str, args: &[Expr], ctx: &mut Ctx) -> Result<Type, String> {
     Ok(Type::Bool)
 }
 
-/// `(concat a b ...)` — string concatenation.
 fn concat_builtin(op: &str, args: &[Expr], ctx: &mut Ctx) -> Result<Type, String> {
     for arg in args {
         let ty = type_check(arg, ctx)?;
@@ -322,7 +284,6 @@ fn concat_builtin(op: &str, args: &[Expr], ctx: &mut Ctx) -> Result<Type, String
     Ok(Type::String)
 }
 
-/// `(show x)` — turns any value into a string.
 fn show_builtin(op: &str, args: &[Expr], ctx: &mut Ctx) -> Result<Type, String> {
     if args.len() != 1 {
         return Err(format!("{op} expects one argument"));
@@ -331,8 +292,6 @@ fn show_builtin(op: &str, args: &[Expr], ctx: &mut Ctx) -> Result<Type, String> 
     Ok(Type::String)
 }
 
-/// `(f a b ...)` — calls a user-defined function: `f` must be a `Fn` type and
-/// the arguments must match the parameter types.
 fn apply_function(name: &str, args: &[Expr], ctx: &mut Ctx) -> Result<Type, String> {
     let f_ty = ctx
         .get(name)

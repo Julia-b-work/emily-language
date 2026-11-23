@@ -1,4 +1,3 @@
-//! End-to-end tests for the evaluator: lex → parse → eval a whole program.
 
 use emily::env::Env;
 use emily::eval::eval;
@@ -6,8 +5,6 @@ use emily::lexer::Lexer;
 use emily::parser::Parser;
 use emily::value::Value;
 
-/// Lex, parse, and evaluate a whole program in a fresh environment,
-/// returning the value of the last form.
 fn run(src: &str) -> Value {
     let tokens = Lexer::new(src).tokenize().unwrap();
     let forms = Parser::new(tokens).parse().unwrap();

@@ -1,53 +1,28 @@
-//! Runtime values: what expressions evaluate to.
 
 use crate::ast::Expr;
 use crate::env::Env;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-/// A runtime value — the result of evaluating an expression.
-///
-/// Mirrors [`Expr`], but the "syntactic" variants are gone: symbols have been
-/// looked up, keywords have become record keys, and lists/vectors are merged.
-/// The new variant is [`Closure`], a function value.
-///
-/// Note: there's no `PartialEq` derive here — `Closure` contains a `RefCell`,
-/// which can't be compared for equality.
 #[derive(Debug, Clone)]
 pub enum Value {
-    /// A whole number.
     Int(i64),
-    /// A floating-point number.
     Float(f64),
-    /// A string.
     String(String),
-    /// A boolean.
     Bool(bool),
-    /// A list of values (both `(...)` and `[...]` become this).
     List(Vec<Value>),
-    /// A record: key/value pairs.
     Record(Vec<(String, Value)>),
-    /// A function value.
     Closure(Closure),
 }
 
-/// A function value: its parameters, body, and the environment it captured.
 #[derive(Debug, Clone)]
 pub struct Closure {
-    /// The parameter names, e.g. `["a", "b"]` for `(fn (a b) ...)`.
     pub params: Vec<String>,
-    /// The function body (an unevaluated expression, evaluated on call).
     pub body: Expr,
-    /// The environment the closure was created in — what it "closes over".
     pub env: Rc<RefCell<Env>>,
 }
 
 impl Value {
-    /// Serializes this value to a JSON string.
-    ///
-    /// Only "data" values (numbers, strings, booleans, lists, records) can be
-    /// serialized. A closure is an error — matching the spec's rule that
-    /// functions never appear in output.
     pub fn to_json(&self) -> Result<String, String> {
         match self {
             Value::Int(n) => Ok(n.to_string()),
@@ -70,18 +45,10 @@ impl Value {
         }
     }
 
-    /// Serializes this value to a YAML string (block style).
-    ///
-    /// Like [`to_json`], a closure is an error — functions never appear in
-    /// output.
     pub fn to_yaml(&self) -> Result<String, String> {
         Ok(yaml_lines(self)?.join("\n"))
     }
 
-    /// Serializes this value to a TOML string.
-    ///
-    /// TOML documents must be a table at the top level, so this errors unless
-    /// the value is a record.
     pub fn to_toml(&self) -> Result<String, String> {
         match self {
             Value::Record(fields) => {
@@ -97,7 +64,6 @@ impl Value {
     }
 }
 
-/// Escapes special characters in a string for JSON output.
 fn escape(s: &str) -> String {
     let mut out = String::new();
     for c in s.chars() {
@@ -113,17 +79,10 @@ fn escape(s: &str) -> String {
     out
 }
 
-/// Whether a value is a collection (list or record), i.e. not a scalar.
 fn is_container(v: &Value) -> bool {
     matches!(v, Value::List(_) | Value::Record(_))
 }
 
-/// Serializes a value into YAML block-style lines.
-///
-/// Each line carries no parent-relative indentation; the caller indents a
-/// nested block's lines by prefixing them with two spaces. Scalars produce a
-/// single line, so a list item or record field is "inline" iff its value is a
-/// scalar.
 fn yaml_lines(v: &Value) -> Result<Vec<String>, String> {
     match v {
         Value::Int(n) => Ok(vec![n.to_string()]),
@@ -166,7 +125,6 @@ fn yaml_lines(v: &Value) -> Result<Vec<String>, String> {
     }
 }
 
-/// Serializes a value as TOML inline (used inside tables and arrays).
 fn toml_value(v: &Value) -> Result<String, String> {
     match v {
         Value::Int(n) => Ok(n.to_string()),

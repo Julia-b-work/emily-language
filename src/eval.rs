@@ -1,8 +1,3 @@
-//! The evaluator: walks the AST and produces runtime values.
-//!
-//! `eval` turns an [`Expr`] tree into a [`Value`], using [`Env`] to look up
-//! and bind names. Special forms (`def`, `let`, `if`, `fn`) are dispatched in
-//! `eval_list`, along with the built-in functions.
 
 use crate::ast::Expr;
 use crate::env::Env;
@@ -10,10 +5,6 @@ use crate::value::{Closure, Value};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-/// Evaluates an expression in the given environment, producing a value.
-///
-/// Atoms evaluate to themselves, symbols are looked up (or treated as field
-/// access), and compound forms are evaluated element-wise or dispatched.
 pub fn eval(expr: &Expr, env: Rc<RefCell<Env>>) -> Result<Value, String> {
     match expr {
         Expr::Int(n) => Ok(Value::Int(*n)),
@@ -69,7 +60,6 @@ pub fn eval(expr: &Expr, env: Rc<RefCell<Env>>) -> Result<Value, String> {
     }
 }
 
-/// Evaluates a list by dispatching on its head symbol.
 fn eval_list(items: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     let (head, rest) = items.split_first().ok_or("empty list")?;
     match head {
@@ -101,8 +91,6 @@ fn eval_list(items: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     }
 }
 
-/// Extracts a binding name from an expression, unwrapping type annotations
-/// (`x : Int` names `x`). Returns `None` for anything that is not a symbol.
 fn binding_name(expr: &Expr) -> Option<&str> {
     match expr {
         Expr::Symbol(n) => Some(n),
@@ -111,7 +99,6 @@ fn binding_name(expr: &Expr) -> Option<&str> {
     }
 }
 
-/// Evaluates `(def name expr)`, binding `name` in the current scope.
 fn eval_def(rest: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     let name = rest
         .first()
@@ -124,7 +111,6 @@ fn eval_def(rest: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     Ok(value)
 }
 
-/// Evaluates `(let [name value ...] body)` in a fresh child scope.
 fn eval_let(rest: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     let bindings = match rest.first() {
         Some(Expr::Vector(b)) => b,
@@ -149,7 +135,6 @@ fn eval_let(rest: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     eval(body, child)
 }
 
-/// Evaluates `(if cond then else)`, running exactly one branch.
 fn eval_if(rest: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     if rest.len() != 3 {
         return Err("if needs a condition, then-branch, and else-branch".to_string());
@@ -162,7 +147,6 @@ fn eval_if(rest: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     }
 }
 
-/// Evaluates `(fn (args) body)`, producing a closure that captures `env`.
 fn eval_fn(rest: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     let params = match rest.first() {
         Some(Expr::List(p)) => {
@@ -185,10 +169,6 @@ fn eval_fn(rest: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     }))
 }
 
-/// Calls a closure with already-evaluated argument values.
-///
-/// Creates a child scope of the closure's *captured* environment, binds the
-/// parameters to the arguments, and evaluates the body.
 fn call_closure(closure: &Closure, arg_values: Vec<Value>) -> Result<Value, String> {
     if arg_values.len() != closure.params.len() {
         return Err(format!(
@@ -204,7 +184,6 @@ fn call_closure(closure: &Closure, arg_values: Vec<Value>) -> Result<Value, Stri
     eval(&closure.body, call_env)
 }
 
-/// Calls a user-defined function by name.
 fn apply_function(name: &str, args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     let func = env
         .borrow()
@@ -222,7 +201,6 @@ fn apply_function(name: &str, args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Va
     }
 }
 
-/// Evaluates an argument and returns it as an integer, or an error.
 fn int_arg(arg: &Expr, env: Rc<RefCell<Env>>, op: &str) -> Result<i64, String> {
     match eval(arg, env)? {
         Value::Int(n) => Ok(n),
@@ -230,7 +208,6 @@ fn int_arg(arg: &Expr, env: Rc<RefCell<Env>>, op: &str) -> Result<i64, String> {
     }
 }
 
-/// `(+ a b ...)` — sums integer arguments.
 fn builtin_add(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     let mut total = 0i64;
     for arg in args {
@@ -242,7 +219,6 @@ fn builtin_add(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     Ok(Value::Int(total))
 }
 
-/// `(concat a b ...)` — concatenates string arguments.
 fn builtin_concat(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     let mut out = String::new();
     for arg in args {
@@ -254,7 +230,6 @@ fn builtin_concat(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String>
     Ok(Value::String(out))
 }
 
-/// `(show x)` — turns a value into a string.
 fn builtin_show(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     if args.len() != 1 {
         return Err("show expects one argument".to_string());
@@ -270,7 +245,6 @@ fn builtin_show(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     Ok(Value::String(text))
 }
 
-/// `(append list value)` — returns the list with `value` added at the end.
 fn builtin_append(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     if args.len() != 2 {
         return Err("append expects a list and a value".to_string());
@@ -286,7 +260,6 @@ fn builtin_append(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String>
     }
 }
 
-/// `(fold list initial (fn (acc x) body))` — reduces a list with a function.
 fn builtin_fold(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     if args.len() != 3 {
         return Err("fold expects a list, an initial value, and a function".to_string());
@@ -305,7 +278,6 @@ fn builtin_fold(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     }
 }
 
-/// `(merge a b ...)` — combines records; later records override earlier keys.
 fn builtin_merge(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     let mut merged: Vec<(String, Value)> = Vec::new();
     for arg in args {
@@ -324,7 +296,6 @@ fn builtin_merge(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> 
     Ok(Value::Record(merged))
 }
 
-/// `(> a b)`, `(< a b)`, `(>= a b)`, `(<= a b)` — numeric ordering comparisons.
 fn compare(op: &str, args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     if args.len() != 2 {
         return Err(format!("{op} expects two numbers"));
@@ -341,7 +312,6 @@ fn compare(op: &str, args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, Stri
     Ok(Value::Bool(result))
 }
 
-/// `(= a b)` — equality over scalars: numbers, strings, and booleans.
 fn builtin_eq(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     if args.len() != 2 {
         return Err("= expects two arguments".to_string());
@@ -358,7 +328,6 @@ fn builtin_eq(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     Ok(Value::Bool(result))
 }
 
-/// `(and a b ...)` — logical conjunction; evaluates every argument first.
 fn builtin_and(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     let mut result = true;
     for arg in args {
@@ -370,7 +339,6 @@ fn builtin_and(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     Ok(Value::Bool(result))
 }
 
-/// `(or a b ...)` — logical disjunction; evaluates every argument first.
 fn builtin_or(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     let mut result = false;
     for arg in args {
@@ -382,7 +350,6 @@ fn builtin_or(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     Ok(Value::Bool(result))
 }
 
-/// `(not x)` — logical negation.
 fn builtin_not(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     if args.len() != 1 {
         return Err("not expects one argument".to_string());
@@ -393,7 +360,6 @@ fn builtin_not(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     }
 }
 
-/// `(- a b)` — subtracts two integers.
 fn builtin_sub(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     if args.len() != 2 {
         return Err("- expects two numbers".to_string());
@@ -403,7 +369,6 @@ fn builtin_sub(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     Ok(Value::Int(a - b))
 }
 
-/// `(* a b ...)` — multiplies integer arguments.
 fn builtin_mul(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     let mut total = 1i64;
     for arg in args {
@@ -415,7 +380,6 @@ fn builtin_mul(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     Ok(Value::Int(total))
 }
 
-/// `(/ a b)` — integer division.
 fn builtin_div(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> {
     if args.len() != 2 {
         return Err("/ expects two numbers".to_string());

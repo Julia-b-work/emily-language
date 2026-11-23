@@ -1,9 +1,3 @@
-//! Emily's entry point: run a `.em` file through the whole pipeline.
-//!
-//! Usage:
-//!   cargo run -- <file.em>                     # JSON (default)
-//!   cargo run -- --format yaml <file.em>       # YAML
-//!   cargo run -- -f toml <file.em>             # TOML
 
 use std::env;
 use std::fs;
