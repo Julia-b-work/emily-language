@@ -18,8 +18,6 @@ use emily::parser::Parser;
 use emily::value::Value;
 
 fn main() {
-    // Parse the command line: an optional `--format`/`-f` flag plus the
-    // `.em` file to run.
     let mut args = env::args().skip(1);
     let mut format = "json".to_string();
     let mut path: Option<String> = None;
@@ -45,7 +43,6 @@ fn main() {
         }
     };
 
-    // Read the source file.
     let source = match fs::read_to_string(&path) {
         Ok(s) => s,
         Err(e) => {
@@ -54,7 +51,6 @@ fn main() {
         }
     };
 
-    // Lex: source text -> tokens.
     let tokens = match Lexer::new(&source).tokenize() {
         Ok(t) => t,
         Err(e) => {
@@ -63,7 +59,6 @@ fn main() {
         }
     };
 
-    // Parse: tokens -> AST.
     let forms = match Parser::new(tokens).parse() {
         Ok(f) => f,
         Err(e) => {
@@ -72,8 +67,6 @@ fn main() {
         }
     };
 
-    // Expand `(import "path")` forms before evaluating, splicing the imported
-    // files' forms in place. Paths resolve relative to the entry file.
     let base_dir = Path::new(&path).parent().unwrap_or(Path::new("."));
     let forms = match expand_imports(forms, base_dir) {
         Ok(f) => f,
@@ -83,8 +76,6 @@ fn main() {
         }
     };
 
-    // Evaluate every top-level form in order; the last one's value is the
-    // program's result.
     let env = Env::new();
     let mut result = Value::Bool(false);
     for form in &forms {
@@ -97,7 +88,6 @@ fn main() {
         }
     }
 
-    // Serialize the result in the requested format and print it.
     let output = match format.as_str() {
         "json" => result.to_json(),
         "yaml" => result.to_yaml(),

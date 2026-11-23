@@ -124,7 +124,5 @@ fn annotated_fn_params_still_work() {
 
 #[test]
 fn annotation_type_is_not_evaluated() {
-    // The type side is syntax only: `UnknownType` is never looked up at
-    // eval time. Resolution happens in the type checker, not the evaluator.
     assert!(matches!(run("(def x : UnknownType 42) x"), Value::Int(42)));
 }

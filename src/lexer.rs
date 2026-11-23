@@ -73,7 +73,6 @@ impl Lexer {
                     self.advance();
                 }
                 Some(';') => {
-                    // A comment runs to end of line: consume up to (not including) the newline.
                     while let Some(c) = self.peek() {
                         if c == '\n' {
                             break;
@@ -88,7 +87,7 @@ impl Lexer {
 
     /// Reads a string literal, returning a `String` token with escapes translated.
     fn lex_string(&mut self) -> Result<TokenKind, String> {
-        self.advance(); // consume the opening quote
+        self.advance();
         let mut out = String::new();
         while let Some(c) = self.advance() {
             match c {
@@ -185,7 +184,7 @@ impl Lexer {
 
     /// Reads a keyword (`:name`). Called only after the `:` is confirmed.
     fn lex_keyword(&mut self) -> TokenKind {
-        self.advance(); // skip the ':'
+        self.advance();
         let s = self.read_symbol_chars();
         TokenKind::Keyword(s)
     }
@@ -194,7 +193,7 @@ impl Lexer {
         let mut tokens = Vec::new();
         loop {
             self.skip_whitespace_and_comments();
-            let (line, col) = (self.line, self.col); // start of the next token
+            let (line, col) = (self.line, self.col);
             let kind = match self.peek() {
                 None => break,
                 Some('(') => {

@@ -33,14 +33,12 @@ pub enum TokenKind {
     Keyword(String),
     /// A standalone `:` used to introduce a type annotation.
     Colon,
-    // Delimiters.
     LParen,
     RParen,
     LBrace,
     RBrace,
     LBracket,
     RBracket,
-    // Reader macros (`'`, `` ` ``, `,`, `,@`).
     Quote,
     Quasiquote,
     Unquote,

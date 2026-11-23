@@ -10,7 +10,6 @@ use emily::types::Type;
 fn ann_type_result(src: &str) -> Result<Type, String> {
     let tokens = Lexer::new(src).tokenize().unwrap();
     let forms = Parser::new(tokens).parse().unwrap();
-    // `(x : Int)` parses as a list holding one annotation.
     let Expr::List(items) = &forms[0] else {
         panic!("expected a list, got {:?}", forms[0]);
     };
@@ -81,6 +80,5 @@ fn parses_record_types() {
 
 #[test]
 fn rejects_malformed_types() {
-    // `(List Int Bool)` is neither a one-element List type nor a fn type.
     assert!(ann_type_result("(x : (List Int Bool))").is_err());
 }

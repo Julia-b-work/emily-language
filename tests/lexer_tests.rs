@@ -125,7 +125,6 @@ fn empty_input() {
 #[test]
 fn tracks_line_and_column() {
     let tokens = lex("(def\n  x 42)");
-    // `42` is on the second line, after two spaces and `x `.
     let int = tokens
         .iter()
         .find(|t| t.kind == TokenKind::Int(42))
@@ -136,7 +135,6 @@ fn tracks_line_and_column() {
 
 #[test]
 fn lexer_errors_include_position() {
-    // `@` is an unexpected character at line 1, column 6.
     let err = Lexer::new("(foo @)").tokenize().unwrap_err();
     assert!(err.contains("line 1, column 6"), "got: {err}");
 }

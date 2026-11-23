@@ -22,7 +22,6 @@ pub fn eval(expr: &Expr, env: Rc<RefCell<Env>>) -> Result<Value, String> {
         Expr::Bool(b) => Ok(Value::Bool(*b)),
 
         Expr::Symbol(name) => {
-            // `base.field` is field access; otherwise it's a plain lookup.
             if let Some((base, field)) = name.split_once('.') {
                 let base_value = env
                     .borrow()
@@ -64,8 +63,6 @@ pub fn eval(expr: &Expr, env: Rc<RefCell<Env>>) -> Result<Value, String> {
 
         Expr::List(items) => eval_list(items, env),
 
-        // Type annotations are syntax only for now: evaluate the annotated
-        // value and ignore the type. The type checker will consume these later.
         Expr::Ann { value, .. } => eval(value, env),
 
         other => Err(format!("not implemented yet: {other:?}")),
@@ -315,8 +312,6 @@ fn builtin_merge(args: &[Expr], env: Rc<RefCell<Env>>) -> Result<Value, String> 
         match eval(arg, env.clone())? {
             Value::Record(fields) => {
                 for (key, value) in fields {
-                    // Update in place if the key already exists (preserving
-                    // order), otherwise append it.
                     match merged.iter_mut().find(|(k, _)| k == &key) {
                         Some(entry) => entry.1 = value,
                         None => merged.push((key, value)),

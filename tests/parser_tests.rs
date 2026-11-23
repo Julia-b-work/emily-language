@@ -127,7 +127,6 @@ fn errors_on_unexpected_token() {
 
 #[test]
 fn errors_report_position() {
-    // A lone `)` is an unexpected token at line 1, column 1.
     let tokens = Lexer::new(")").tokenize().unwrap();
     let err = Parser::new(tokens).parse().unwrap_err();
     assert!(err.contains("line 1, column 1"), "got: {err}");
@@ -165,7 +164,6 @@ fn parses_fn_parameter_annotation() {
 
 #[test]
 fn parses_nested_type_annotation() {
-    // The type side is an ordinary form: `(List Int)` and `(Int -> Bool)`.
     assert_eq!(
         parse("(def xs : (List Int) xs)"),
         vec![Expr::List(vec![

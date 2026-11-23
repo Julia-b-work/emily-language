@@ -95,7 +95,7 @@ pub fn type_check(expr: &Expr, ctx: &mut Ctx) -> Result<Type, String> {
             if ty != first_type {
                 return Err(format!("list elements must all have the same type: {first_type:?} vs {ty:?}"));
             }
-        } 
+        }
         Ok(Type::List(Box::new(first_type)))
     }
 
@@ -327,7 +327,7 @@ fn show_builtin(op: &str, args: &[Expr], ctx: &mut Ctx) -> Result<Type, String> 
     if args.len() != 1 {
         return Err(format!("{op} expects one argument"));
     }
-    type_check(&args[0], ctx)?; // any type is allowed
+    type_check(&args[0], ctx)?;
     Ok(Type::String)
 }
 
