@@ -4,9 +4,11 @@
 [![Tests](https://github.com/Julia-b-work/emily-language/actions/workflows/test.yml/badge.svg)](https://github.com/Julia-b-work/emily-language/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A total, statically typed Lisp for configuration and data. It compiles to JSON,
-YAML, and TOML, and is designed to replace YAML/JSON where you need types,
-reuse, and safety.
+A Lisp for configuration and data, written in Rust. It compiles to JSON, YAML,
+and TOML, and is designed to replace YAML/JSON where you need reuse and safety.
+
+Static typing is in progress: annotations parse today, but the type checker is
+still being built and doesn't enforce anything yet.
 
 ## Dedication
 
@@ -34,8 +36,8 @@ I hope this language is as safe as she makes me feel.
 }
 ```
 
-Configuration with types and reuse. Functions and records
-instead of copy-pasted YAML.
+Configuration with functions, records, and reuse — instead of
+copy-pasted YAML.
 
 ## Demo
 
@@ -49,6 +51,10 @@ v1 is complete. The pipeline is:
 - [x] **Parser** -> tokens → AST (tested)
 - [x] **Evaluator** -> AST → values (`def`/`let`/`if`/`fn`, closures, field access, builtins)
 - [x] **CLI + JSON/YAML/TOML output** -> `cargo run -- examples/hello.em` (or `--format yaml` / `--format toml`)
+
+Type annotations (`(def x : Int 42)`, `(fn (a : Int) ...)`) parse but are **not
+checked yet**: the type checker exists in `src/typechecker.rs` but isn't wired
+into the CLI, so today annotations are syntax only.
 
 ## Documentation
 
@@ -80,6 +86,7 @@ cargo test    # run the tests
 │   ├── eval.rs    # AST → values
 │   ├── import.rs  # (import "file.em") expansion
 │   ├── types.rs   # the Type enum (annotations)
+│   ├── typechecker.rs # static type checker (in development, not enforced)
 │   ├── lib.rs     # module declarations
 │   └── main.rs    # CLI entry point
 ├── tests/
@@ -119,7 +126,7 @@ cargo test    # run the tests
 ### v0.2.0 (in progress)
 
 - [x] YAML and TOML output
-- [x] Imports with integrity checking
-- [ ] Static types and inference
+- [x] Imports (path-based, with cycle detection)
+- [ ] Static types and inference (annotations parse; checker written, not enforced)
 - [ ] Hygienic macros
 - [ ] ADTs + pattern matching

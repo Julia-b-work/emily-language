@@ -1,9 +1,14 @@
 # Emily — Language Specification
 
-> **Emily** is a total, statically typed Lisp for configuration and data. It
-> compiles to JSON, YAML, and TOML. It has hygienic macros, full type
-> inference, and first-class imports with integrity checking. It is designed to
-> replace YAML and JSON where you need types, reuse, and safety.
+> **Emily** is a Lisp for configuration and data. It compiles to JSON, YAML,
+> and TOML, and is designed to replace YAML and JSON where you need reuse and
+> safety.
+
+> **Status (v0.2.0):** the lexer, parser, evaluator, path-based imports, and
+> JSON/YAML/TOML output are implemented and tested. Type annotations parse but
+> are not checked yet. Hygienic macros, ADTs + pattern matching, unions, full
+> inference, and `:sha256`/`env:` imports are planned, not implemented — the
+> rest of this document describes the target language.
 
 ## Goals
 
